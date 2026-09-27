@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Playwright task list</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      body { font: 1.2rem system-ui, sans-serif; max-width: 32rem; margin: 4rem auto; }
+      form { display: flex; gap: .5rem; }
+      input { flex: 1; padding: .5rem; }
+      button { padding: .5rem 1rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Task list</h1>
+    <form id="task-form">
+      <label for="task">Task</label>
+      <input id="task" name="task" required>
+      <button type="submit">Add task</button>
+    </form>
+    <ul id="items"></ul>
+    <script>
+      document.querySelector("#task-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const input = document.querySelector("#task");
+        const item = document.createElement("li");
+        item.textContent = input.value;
+        document.querySelector("#items").append(item);
+        input.value = "";
+      });
+    </script>
+  </body>
+</html>

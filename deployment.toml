@@ -1,0 +1,50 @@
+[[activity_exec]]
+ffqn = "demo:playwright/browser.start"
+location = "activity/start.sh"
+params = [
+  { name = "container-name", type = "string" },
+  { name = "socket", type = "string" },
+  { name = "url", type = "string" },
+]
+return_type = "result<record { container: string, image: string, socket: string, id: string, vncport: option<u16> }, string>"
+exec.lock_expiry.seconds = 45
+max_retries = 3
+env_vars = [
+  "PATH",
+  { key = "HEADED", value = "${HEADED:-false}" },
+]
+
+[[activity_exec]]
+ffqn = "demo:playwright/browser.eval"
+location = "activity/eval.sh"
+params = [
+  { name = "socket", type = "string" },
+  { name = "code", type = "string" },
+]
+return_type = "result<string, string>"
+exec.lock_expiry.seconds = 45
+max_retries = 2
+max_output_bytes = 65536
+env_vars = ["PATH"]
+
+[[activity_exec]]
+ffqn = "demo:playwright/browser.cleanup"
+location = "activity/cleanup.sh"
+params = [
+  { name = "container-name", type = "string" },
+  { name = "socket", type = "string" },
+]
+return_type = "result<_, string>"
+exec.lock_expiry.seconds = 30
+max_retries = 3
+env_vars = ["PATH"]
+
+[[workflow_js]]
+ffqn = "demo:playwright/workflow.run"
+location = "workflow/run.js"
+params = [
+  { name = "session-id", type = "string" },
+  { name = "task", type = "string" },
+  { name = "pause-seconds", type = "u32" },
+]
+return_type = "result<record { title: string, tasks: list<string> }, string>"
