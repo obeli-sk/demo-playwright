@@ -15,6 +15,7 @@ jobs:
             extra-substituters = https://obeli-sk.cachix.org
             extra-trusted-public-keys = obeli-sk.cachix.org-1:31iM9GWSEhAXvvuTWQ7CvAcwvgRzsuJ9yJghywSd3Jw=
       - run: nix develop --command just verify
+      - run: nix develop --command ./scripts/dev-deps.sh && git diff --exit-code -- dev-deps.txt
       - run: nix develop --command just test-browser
       - run: nix develop --command just build
       - run: nix develop --command just test-e2e

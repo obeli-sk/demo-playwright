@@ -7,7 +7,9 @@ external site or credentials.
 
 ## Run
 
-Install Nix and start a Docker daemon, then enter the development shell and build the image:
+Install Nix and start a Docker daemon, then enter the development shell and build the image. You
+can copy `.envrc-example` to `.envrc` and allow it with direnv instead of entering `nix develop`
+manually.
 
 ```sh
 nix develop
@@ -15,6 +17,8 @@ just build
 just verify
 just serve
 ```
+
+`just serve` disables API authentication for this local loopback demo.
 
 In another shell, enter `nix develop` and submit a run with a unique session ID:
 
@@ -49,6 +53,9 @@ bundled page with the Nix Chromium build. It checks form interaction, retry beha
 returned page state. `just verify` checks the Obelisk deployment and both exec approval policies.
 With a Docker daemon running, `just test-e2e` also starts Obelisk, runs the full workflow, and
 checks that its container was removed.
+
+After updating `flake.lock`, refresh the recorded tool versions with
+`nix develop -c ./scripts/dev-deps.sh`.
 
 ## How it fits together
 

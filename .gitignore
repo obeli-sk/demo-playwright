@@ -1,3 +1,4 @@
 .direnv/
+.envrc
 browser/node_modules/
 result
