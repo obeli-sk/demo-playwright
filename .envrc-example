@@ -1,2 +1,2 @@
 use flake .
-export OBELISK_API_TOKEN=replace-with-generated-token
+export OBELISK_API_TOKEN=$(obelisk generate token)

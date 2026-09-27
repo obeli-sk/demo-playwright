@@ -7,12 +7,13 @@ external site or credentials.
 
 ## Run
 
-Install Nix and start a Docker daemon. Generate an API token with
-`nix develop -c obelisk generate token`, then copy `.envrc-example` to `.envrc` and replace its
-placeholder with that token. Run `direnv allow` to load the development shell and token in each
-terminal. Without direnv, enter `nix develop`, run `export OBELISK_API_TOKEN=$(obelisk generate token)`
-before starting the server, and export that same token in the CLI terminal.
-If using direnv, skip `nix develop` below.
+Install Nix and start a Docker daemon. Copy `.envrc-example` to `.envrc` and run `direnv allow` to
+load the development shell and generate an API token. Without direnv, enter `nix develop` and run
+`export OBELISK_API_TOKEN=$(obelisk generate token)` before starting the server. Skip `nix develop`
+below if direnv already loaded the shell.
+
+Before starting the server, print its token with `printf '%s\n' "$OBELISK_API_TOKEN"` if you plan
+to use the CLI in another terminal.
 
 ```sh
 nix develop
@@ -21,7 +22,10 @@ just verify
 just serve
 ```
 
-In another shell with the same token, submit a run with a unique session ID:
+In another shell, run `export OBELISK_API_TOKEN='paste-token-here'` before submitting a run with a
+unique session ID. Each `.envrc` load generates a new token, so a new terminal can have a different
+value. You can instead run `just serve &` and the CLI in one shell, or replace the command in
+`.envrc` with a fixed token.
 
 ```sh
 obelisk execution submit --follow demo:playwright/workflow.run -- \
