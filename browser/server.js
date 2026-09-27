@@ -22,7 +22,6 @@ async function main() {
   const url = parseJsonArg(3, "url");
   const browser = await chromium.launch({
     headless: process.env.HEADED !== "true",
-    executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
   });
   const context = await browser.newContext();
   const page = await context.newPage();

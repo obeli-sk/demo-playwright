@@ -96,13 +96,11 @@ Allow each activity to finish before advancing again. You can instead run
 `obelisk execution unpause E_...` to complete the remaining steps automatically; the
 browser closes during cleanup.
 
-## Check the browser without Docker
+## Check the demo
 
-`just test-browser` installs the pinned Playwright package and runs the browser server against the
-bundled page with the Nix Chromium build. It checks form interaction, retry behavior, and the
-returned page state. `just verify` checks the Obelisk deployment and both exec approval policies.
-With a Docker daemon running, `just test-e2e` also starts Obelisk, runs the full workflow, and
-checks that its container was removed.
+`just verify` checks the Obelisk deployment and both exec approval policies. With a Docker daemon
+running, `just test-e2e` starts Obelisk, runs the full workflow, and checks that its container was
+removed.
 
 After updating `flake.lock`, refresh the recorded tool versions with
 `nix develop -c ./scripts/dev-deps.sh`.

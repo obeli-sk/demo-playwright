@@ -17,9 +17,5 @@ vnc-start session task:
 vnc-advance execution_id:
   obelisk execution advance "$1"
 
-test-browser:
-  npm ci --prefix browser --ignore-scripts
-  ./scripts/test-browser-server.sh
-
 test-e2e:
   ./scripts/test-e2e.sh

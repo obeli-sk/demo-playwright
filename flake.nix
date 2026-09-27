@@ -27,16 +27,9 @@
             docker
             jq
             just
-            nodejs_22
-            playwright-driver
             socat
             obelisk.packages.${system}.default
           ];
-          shellHook = ''
-            export PLAYWRIGHT_BROWSERS_PATH="${pkgs.playwright-driver.browsers}"
-            export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-            export PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$(echo ${pkgs.playwright-driver.browsers}/chromium-*/chrome-linux*/chrome)
-          '';
         };
       });
 }

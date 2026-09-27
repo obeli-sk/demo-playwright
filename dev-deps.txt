@@ -2,8 +2,5 @@ curl 8.22.0
 docker 29.8.0
 jq 1.8.2
 just 1.58.0
-node v22.23.2
-npm 10.9.8
 obelisk 0.42.0-rc.6
-playwright-driver 1.63.0
 socat version 1.8.1.3
