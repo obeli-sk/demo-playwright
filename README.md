@@ -57,17 +57,44 @@ workflow paused and advance it through browser startup:
 just vnc-start watch-demo 'Buy milk'
 ```
 
-The command prints a `127.0.0.1:<port>` VNC address and an execution ID. Connect a local VNC
-viewer to that address. The workflow remains paused while the browser is open. Advance it when
-ready, repeating the command to step through the page action and cleanup:
+The output includes the first blocked child, the local VNC address, and the execution ID. The port
+and ID will differ on your machine:
 
-```sh
-just vnc-advance E_...
+```text
+success, current state: Paused(BlockedByJoinSet(o:1-start, ...))
+VNC: 127.0.0.1:32769
+Execution: E_01M3GZGNBXR1RQW3V1SE2QDJMT
 ```
 
-Each advance applies the next workflow step. Allow the browser activity to finish before advancing
-again. To let Obelisk complete the remaining steps automatically, run
-`obelisk execution unpause E_...`; this also closes the browser after the workflow finishes.
+Connect a local VNC viewer to the printed address. The browser is open, and the workflow remains
+paused before adding the task:
+
+![VNC browser showing an empty task list](screenshots/vnc-before.png)
+
+Advance the printed execution ID once to schedule the page action:
+
+```sh
+just vnc-advance E_01M3GZGNBXR1RQW3V1SE2QDJMT
+# success, current state: Paused(BlockedByJoinSet(o:2-eval, ...))
+```
+
+After the eval activity finishes, VNC shows the new task while the workflow is still paused:
+
+![VNC browser showing Buy milk in the task list](screenshots/vnc-task-added.png)
+
+Advance again to read the page (`o:3-eval`), then to schedule browser cleanup (`o:4-cleanup`),
+and once more to get the final result:
+
+```sh
+just vnc-advance E_01M3GZGNBXR1RQW3V1SE2QDJMT
+just vnc-advance E_01M3GZGNBXR1RQW3V1SE2QDJMT
+just vnc-advance E_01M3GZGNBXR1RQW3V1SE2QDJMT
+# success: {"ok":{"title":"Playwright task list","tasks":["Buy milk"]}}
+```
+
+Allow each activity to finish before advancing again. You can instead run
+`obelisk execution unpause E_...` to complete the remaining steps automatically; the
+browser closes during cleanup.
 
 ## Check the browser without Docker
 
