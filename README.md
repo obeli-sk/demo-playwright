@@ -7,9 +7,12 @@ external site or credentials.
 
 ## Run
 
-Install Nix and start a Docker daemon, then enter the development shell and build the image. You
-can copy `.envrc-example` to `.envrc` and allow it with direnv instead of entering `nix develop`
-manually.
+Install Nix and start a Docker daemon. Generate an API token with
+`nix develop -c obelisk generate token`, then copy `.envrc-example` to `.envrc` and replace its
+placeholder with that token. Run `direnv allow` to load the development shell and token in each
+terminal. Without direnv, enter `nix develop`, run `export OBELISK_API_TOKEN=$(obelisk generate token)`
+before starting the server, and export that same token in the CLI terminal.
+If using direnv, skip `nix develop` below.
 
 ```sh
 nix develop
@@ -18,9 +21,7 @@ just verify
 just serve
 ```
 
-`just serve` disables API authentication for this local loopback demo.
-
-In another shell, enter `nix develop` and submit a run with a unique session ID:
+In another shell with the same token, submit a run with a unique session ID:
 
 ```sh
 obelisk execution submit --follow demo:playwright/workflow.run -- \

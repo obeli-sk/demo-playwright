@@ -7,7 +7,7 @@ verify:
   obelisk server verify --server-config server.toml --app-config app.toml --deployment deployment.toml
 
 serve:
-  obelisk server run --no-auth --server-config server.toml --app-config app.toml --deployment deployment.toml
+  obelisk server run --server-config server.toml --app-config app.toml --deployment deployment.toml
 
 test-browser:
   npm ci --prefix browser --ignore-scripts
