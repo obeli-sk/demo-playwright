@@ -48,8 +48,26 @@ Restart with `just serve`. Obelisk resumes the workflow, reads the same browser 
 the container. The add-task action checks whether the task is already present before clicking, so
 an activity retry cannot add a duplicate.
 
-Set `HEADED=true` before `just serve` to watch Chromium through VNC. The start activity logs the
-localhost VNC port.
+## Watch through VNC
+
+Start Obelisk with `HEADED=true just serve`. In a shell using the same API token, submit the
+workflow paused and advance it through browser startup:
+
+```sh
+just vnc-start watch-demo 'Buy milk'
+```
+
+The command prints a `127.0.0.1:<port>` VNC address and an execution ID. Connect a local VNC
+viewer to that address. The workflow remains paused while the browser is open. Advance it when
+ready, repeating the command to step through the page action and cleanup:
+
+```sh
+just vnc-advance E_...
+```
+
+Each advance applies the next workflow step. Allow the browser activity to finish before advancing
+again. To let Obelisk complete the remaining steps automatically, run
+`obelisk execution unpause E_...`; this also closes the browser after the workflow finishes.
 
 ## Check the browser without Docker
 
