@@ -29,6 +29,8 @@
             just
             socat
             obelisk.packages.${system}.default
+            gh # scripts/sync-branch-protection.sh
+            yq-go # scripts/sync-branch-protection.sh
           ];
         };
       });
