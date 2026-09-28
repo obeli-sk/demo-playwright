@@ -8,6 +8,9 @@ build:
 verify:
   obelisk server verify --server-config server.toml --app-config app.toml --deployment deployment.toml
 
+serve-page:
+  node page/server.mjs
+
 serve:
   obelisk server run --server-config server.toml --app-config app.toml --deployment deployment.toml
 

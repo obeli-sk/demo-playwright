@@ -36,7 +36,7 @@ if [ "${HEADED:-}" = "true" ]; then
 
   x11vnc \
     -display :99 \
-    -listen 0.0.0.0 \
+    -listen "${VNC_LISTEN:-0.0.0.0}" \
     -rfbport 5900 \
     -forever \
     -shared \

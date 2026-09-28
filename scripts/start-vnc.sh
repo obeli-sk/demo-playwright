@@ -23,7 +23,11 @@ obelisk execution advance "$execution_id"
 
 for _ in $(seq 1 120); do
   if [ -S "$socket" ]; then
-    address=$(docker port "$container" 5900/tcp 2>/dev/null | head -1 || true)
+    if [ "$(docker inspect "$container" --format '{{.HostConfig.NetworkMode}}' 2>/dev/null)" = host ]; then
+      address=127.0.0.1:5900
+    else
+      address=$(docker port "$container" 5900/tcp 2>/dev/null | head -1 || true)
+    fi
     if [ -n "$address" ]; then
       printf 'VNC: %s\nExecution: %s\n' "$address" "$execution_id"
       exit 0
