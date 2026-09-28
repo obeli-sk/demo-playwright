@@ -4,4 +4,5 @@ jq 1.8.2
 just 1.58.0
 node 24.20.0
 obelisk 0.42.0-rc.6
+qemu 11.1.0
 socat version 1.8.1.3

@@ -1,6 +1,7 @@
 set positional-arguments := true
 
 image := "demo-playwright:local"
+vm_backend := env("OBELISK_UNSTABLE_ACTIVITY_VM", "qemu-tcg")
 
 build:
   docker build -t {{image}} browser
@@ -22,3 +23,12 @@ vnc-advance execution_id:
 
 test-e2e:
   ./scripts/test-e2e.sh
+
+verify-vm:
+  OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}} obelisk server verify --server-config server.toml --app-config app.toml --deployment deployment-vm.toml
+
+serve-vm:
+  OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}} obelisk server run --server-config server.toml --app-config app.toml --deployment deployment-vm.toml
+
+test-e2e-vm:
+  OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}} ./scripts/test-e2e.sh vm

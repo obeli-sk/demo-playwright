@@ -2,6 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+mode=${1:-docker}
 export OBELISK_API_TOKEN=demo-playwright-test-token
 session="test-$(date +%s)-$$"
 container="demo-playwright-$session"
@@ -16,19 +17,26 @@ cleanup() {
       wait "$pid" 2>/dev/null || true
     fi
   done
-  docker rm -f "$container" >/dev/null 2>&1 || true
+  if [ "$mode" = docker ]; then docker rm -f "$container" >/dev/null 2>&1 || true; fi
   if [ "$status" -ne 0 ]; then cat "$server_log" >&2; fi
   rm -f "$server_log"
 }
 trap cleanup EXIT
 
+case "$mode" in
+  docker) deployment=deployment.toml ;;
+  vm) deployment=deployment-vm.toml ;;
+  *) printf 'Unknown mode %s, expected docker or vm\n' "$mode" >&2; exit 1 ;;
+esac
+
 node page/server.mjs >>"$server_log" 2>&1 &
 page_pid=$!
 
-obelisk server run --server-config server.toml --app-config app.toml --deployment deployment.toml >>"$server_log" 2>&1 &
+obelisk server run --server-config server.toml --app-config app.toml --deployment "$deployment" >>"$server_log" 2>&1 &
 server_pid=$!
 ready=false
-for _ in $(seq 1 30); do
+# The first VM deployment downloads the runtime bundle and Nix closure.
+for _ in $(seq 1 600); do
   if curl -fsS -H "Authorization: Bearer $OBELISK_API_TOKEN" \
     http://127.0.0.1:5005/v1/components >/dev/null 2>&1 \
     && curl -fsS http://127.0.0.1:8090/ >/dev/null 2>&1; then
@@ -43,9 +51,17 @@ if [ "$ready" != true ]; then
   exit 1
 fi
 
+expected='{title:"Playwright task list",tasks:["Buy milk"]}'
+if [ "$mode" = vm ]; then
+  result=$(obelisk execution submit --follow --json demo:playwright/workflow-vm.run -- '"Buy milk"')
+  jq -s -e ".[-1].ok == $expected" <<<"$result" >/dev/null
+  printf 'Obelisk VM browser workflow passed\n'
+  exit 0
+fi
+
 result=$(obelisk execution submit --follow --json demo:playwright/workflow.run -- \
   "$(jq -nc --arg value "$session" '$value')" '"Buy milk"' 0)
-jq -s -e '.[-1].ok == {title:"Playwright task list",tasks:["Buy milk"]}' <<<"$result" >/dev/null
+jq -s -e ".[-1].ok == $expected" <<<"$result" >/dev/null
 if docker inspect "$container" >/dev/null 2>&1; then
   printf 'Browser container was not cleaned up\n' >&2
   exit 1

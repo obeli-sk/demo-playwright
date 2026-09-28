@@ -26,6 +26,7 @@
             curl
             docker
             nodejs
+            qemu # activity VM backend
             jq
             just
             socat

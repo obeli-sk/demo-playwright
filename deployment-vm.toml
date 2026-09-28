@@ -1,0 +1,28 @@
+[[activity_vm]]
+ffqn = "demo:playwright/vm-browser.run"
+location = "vm/browser.js"
+params = [
+  { name = "url", type = "string" },
+  { name = "code", type = "string" },
+]
+return_type = "result<string, string>"
+exec.lock_expiry.seconds = 300
+max_retries = 2
+max_output_bytes = 65536
+store_paths = [
+  "/nix/store/z5piarlh57mjwr4c9w318ay97sxr6c9m-nodejs-slim-24.20.0",
+  "/nix/store/0k9k01y3zfnkbh71jq6vx08g572qjrpr-playwright-core-1.63.0",
+  "/nix/store/i08h6m15rm5n2w13lc2s5kq5v607q626-playwright-chromium-headless-shell",
+  "/nix/store/71mxn2pyq807r32qsd2mdszkajhlb39q-dejavu-fonts-2.37",
+]
+
+# Guest `obelisk-host` is rewritten to the host's `localhost`.
+[[activity_vm.allowed_host]]
+pattern = "http://localhost:8090"
+methods = ["GET"]
+
+[[workflow_js]]
+ffqn = "demo:playwright/workflow-vm.run"
+location = "workflow/run-vm.js"
+params = [{ name = "task", type = "string" }]
+return_type = "result<record { title: string, tasks: list<string> }, string>"

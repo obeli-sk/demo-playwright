@@ -99,6 +99,31 @@ Allow each activity to finish before advancing again. You can instead run
 `obelisk execution unpause E_...` to complete the remaining steps automatically; the
 browser closes during cleanup.
 
+## Run in an activity VM
+
+The same page actions can run in a headless Chromium inside an Obelisk activity VM instead of
+Docker. This needs Obelisk 0.42.0-rc.7 or later, which adds the native QEMU backend.
+
+```sh
+nix develop
+just serve-page &
+just serve-vm
+```
+
+In another shell with the same API token:
+
+```sh
+obelisk execution submit --follow demo:playwright/workflow-vm.run -- '"Buy milk"'
+# {"ok":{"title":"Playwright task list","tasks":["Buy milk"]}}
+```
+
+The first deployment downloads the QEMU runtime bundle and the Nix closure of Node, Playwright,
+and the Chromium headless shell. Each VM activity is a fresh guest, so
+[vm/browser.js](vm/browser.js) launches the browser, runs one page action, and exits within a
+single activity. The guest reaches the host page as `http://obelisk-host:8090/`, allowed by
+`app.toml` and [deployment-vm.toml](deployment-vm.toml). Set
+`OBELISK_UNSTABLE_ACTIVITY_VM=qemu-kvm` on a host with `/dev/kvm` to use KVM instead of TCG. `just test-e2e-vm` runs the VM workflow end to end.
+
 ## Check the demo
 
 `just verify` checks the Obelisk deployment and both exec approval policies. With a Docker daemon
@@ -113,7 +138,10 @@ After updating `flake.lock`, refresh the recorded tool versions with
 - [deployment.toml](deployment.toml) declares three exec activities and one JS workflow.
 - [workflow/run.js](workflow/run.js) holds the durable sequence and cleanup.
 - [activity/](activity/) contains the host scripts that manage the Docker container and socket.
+- [deployment-vm.toml](deployment-vm.toml) declares the VM activity and its workflow,
+  [workflow/run-vm.js](workflow/run-vm.js).
 - [browser/](browser/) builds the image containing Playwright.
+- [vm/](vm/) holds the Playwright script run inside the activity VM.
 - [page/](page/) holds the task-list page and its Node server.
 
 The browser runner is adapted from the MIT-licensed public `obeli-sk/components` Playwright

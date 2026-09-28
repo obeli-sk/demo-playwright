@@ -9,5 +9,6 @@ cd "$(dirname "$0")/.."
   just --version
   printf 'node %s\n' "$(node --version | sed 's/^v//')"
   obelisk --version
+  qemu-system-x86_64 --version | awk 'NR == 1 { print "qemu", $4 }'
   socat -V | awk '/^socat version / { print $1, $2, $3 }'
 } > dev-deps.txt
