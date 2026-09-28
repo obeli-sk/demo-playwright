@@ -99,6 +99,26 @@ Allow each activity to finish before advancing again. You can instead run
 `obelisk execution unpause E_...` to complete the remaining steps automatically; the
 browser closes during cleanup.
 
+## Inception: Obelisk inside the browser
+
+The Docker browser can also open [trynix.dev](https://trynix.dev/), which boots Nix store paths in
+an x86_64 VM running as QEMU compiled to WebAssembly. With `just build` done and `just serve`
+running, in a shell with the same API token:
+
+```sh
+just inception-docker
+# Execution finished: OK: "obelisk 0.42.0-rc.6"
+```
+
+[workflow/inception.js](workflow/inception.js) adds the
+[obeli-sk Cachix cache](https://obeli-sk.cachix.org), selects the store path of
+`nix eval --raw github:obeli-sk/obelisk/latest-rc`, boots the VM, and returns the output of `obelisk -v` run in the guest. Pass another
+store path from that cache with `just inception-docker /nix/store/...`. The page draws its terminal
+on a canvas, so the workflow drives trynix through the tools the page registers for
+[WebMCP](https://github.com/webmachinelearning/webmcp), which also return the command output.
+Booting outlasts a single browser activity, so the workflow starts the boot and polls it with
+durable sleeps.
+
 ## Run in an activity VM
 
 The same page actions can run in a headless Chromium inside an Obelisk activity VM instead of
@@ -135,8 +155,9 @@ After updating `flake.lock`, refresh the recorded tool versions with
 
 ## How it fits together
 
-- [deployment.toml](deployment.toml) declares three exec activities and one JS workflow.
+- [deployment.toml](deployment.toml) declares three exec activities and two JS workflows.
 - [workflow/run.js](workflow/run.js) holds the durable sequence and cleanup.
+- [workflow/inception.js](workflow/inception.js) boots Obelisk on trynix.dev in the same browser.
 - [activity/](activity/) contains the host scripts that manage the Docker container and socket.
 - [deployment-vm.toml](deployment-vm.toml) declares the VM activity and its workflow,
   [workflow/run-vm.js](workflow/run-vm.js).

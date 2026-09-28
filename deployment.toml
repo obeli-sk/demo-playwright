@@ -48,3 +48,9 @@ params = [
   { name = "pause-seconds", type = "u32" },
 ]
 return_type = "result<record { title: string, tasks: list<string> }, string>"
+
+[[workflow_js]]
+ffqn = "demo:playwright/workflow.inception"
+location = "workflow/inception.js"
+params = [{ name = "store-path", type = "string" }]
+return_type = "result<string, string>"
