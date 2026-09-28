@@ -25,6 +25,7 @@
           nativeBuildInputs = with pkgs; [
             curl
             docker
+            nodejs
             jq
             just
             socat

@@ -10,7 +10,7 @@ export default function run(session_id, task, pause_seconds) {
   const container = `demo-playwright-${session_id}`;
   const socket = `/tmp/demo-playwright/${session_id}.sock`;
   try {
-    browser.start(container, socket, "file:///app/fixture.html");
+    browser.start(container, socket, "http://127.0.0.1:8090/");
 
     const addTask = `
       const task = ${JSON.stringify(task)};

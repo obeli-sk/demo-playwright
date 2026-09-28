@@ -7,6 +7,7 @@ cd "$(dirname "$0")/.."
   printf 'docker %s\n' "$(docker --version | awk '{ gsub(",", "", $3); print $3 }')"
   printf 'jq %s\n' "$(jq --version | sed 's/^jq-//')"
   just --version
+  printf 'node %s\n' "$(node --version | sed 's/^v//')"
   obelisk --version
   socat -V | awk '/^socat version / { print $1, $2, $3 }'
 } > dev-deps.txt

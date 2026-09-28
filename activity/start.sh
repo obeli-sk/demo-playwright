@@ -52,7 +52,7 @@ docker_args=(
 )
 
 if [ "$use_host_network" = "true" ]; then
-  docker_args+=(--network host)
+  docker_args+=(--network host -e VNC_LISTEN=127.0.0.1)
 elif [ "${HEADED:-}" = "true" ]; then
   docker_args+=(-p "127.0.0.1::5900")
 fi
