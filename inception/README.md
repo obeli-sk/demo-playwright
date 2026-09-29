@@ -29,16 +29,19 @@ without KVM it takes several minutes.
 
 ## Multi step (Docker only)
 
-[workflow/multistep.js](workflow/multistep.js) keeps one browser open and runs one activity per
-step: open the page, select the build, boot, run `obelisk -v`, and close the browser.
+[workflow/multistep.js](workflow/multistep.js) opens trynix in a browser you can watch and
+removes the browser at the end. In between, [workflow/steps.js](workflow/steps.js) selects the
+build, boots it and runs `obelisk -v`, one activity per step. See
+[Cleaning up the browser](../README.md#cleaning-up-the-browser) for how the two fit together.
 
 ```sh
 just inception-multistep
 # VNC: 127.0.0.1:32769
-# Execution: E_01M3GZGNBXR1RQW3V1SE2QDJMT
+# Execution: E_01M3GZGNBXR1RQW3V1SE2QDJMT.n:session_1
+# Supervisor: E_01M3GZGNBXR1RQW3V1SE2QDJMT
 ```
 
-Connect a VNC viewer to the printed address and run `just advance E_...` to take each step, or
-`just unpause E_...` to run the rest:
+Connect a VNC viewer to the printed address and run `just advance` with the printed execution ID to
+take each step, `just unpause` to run the rest or `just cancel` to stop:
 
 <img src="screenshots/vnc-demo.gif" width="644" alt="VNC browser loading trynix, selecting the Obelisk store path, booting the VM and printing obelisk -v">
