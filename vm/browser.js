@@ -23,7 +23,12 @@ async function main() {
   );
   process.env.FONTCONFIG_FILE = "/tmp/fonts.conf";
 
-  const browser = await chromium.launch({ executablePath: HEADLESS_SHELL });
+  // Guest TLS ends at Obelisk's proxy, whose per-run CA Chromium does not know; the host verifies
+  // upstream. The switch, unlike Playwright's ignoreHTTPSErrors, also covers service workers.
+  const browser = await chromium.launch({
+    executablePath: HEADLESS_SHELL,
+    args: ["--ignore-certificate-errors"],
+  });
   let result;
   try {
     const page = await browser.newPage();

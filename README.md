@@ -106,14 +106,14 @@ an x86_64 VM running as QEMU compiled to WebAssembly. With `just build` done and
 running, in a shell with the same API token:
 
 ```sh
-just inception-docker
+just inception
 # Execution finished: OK: "obelisk 0.42.0-rc.6"
 ```
 
 [workflow/inception.js](workflow/inception.js) adds the
 [obeli-sk Cachix cache](https://obeli-sk.cachix.org), selects the store path of
 `nix eval --raw github:obeli-sk/obelisk/latest-rc`, boots the VM, and returns the output of `obelisk -v` run in the guest. Pass another
-store path from that cache with `just inception-docker /nix/store/...`. The page draws its terminal
+store path from that cache with `just inception /nix/store/...`. The page draws its terminal
 on a canvas, so the workflow drives trynix through the tools the page registers for
 [WebMCP](https://github.com/webmachinelearning/webmcp), which also return the command output.
 Booting outlasts a single browser activity, so the workflow starts the boot and polls it with
@@ -144,6 +144,30 @@ single activity. The guest reaches the host page as `http://obelisk-host:8090/`,
 `app.toml` and [deployment-vm.toml](deployment-vm.toml). Set
 `OBELISK_UNSTABLE_ACTIVITY_VM=qemu-kvm` on a host with `/dev/kvm` to use KVM instead of TCG. `just test-e2e-vm` runs the VM workflow end to end.
 
+Chromium in the guest runs with `--ignore-certificate-errors`. Guest HTTPS ends at Obelisk's guest
+proxy, which signs with a per-run CA that Chromium does not trust, and the host verifies the real
+upstream certificate before any request leaves.
+
+### Inception inside the activity VM
+
+`just inception` also works against `just serve-vm`. Both deployments export
+`demo:playwright/workflow.inception`, so the client does not change; the VM deployment implements it
+inside a single VM activity. Chromium opens trynix.dev in the guest, boots the store path there in
+QEMU compiled to WebAssembly, and returns the output of `obelisk -v`:
+
+```sh
+OBELISK_UNSTABLE_ACTIVITY_VM=qemu-kvm just serve-vm   # in one shell
+just inception                                       # in another, with the same API token
+# Execution finished: OK: "obelisk 0.42.0-rc.6"
+```
+
+[workflow/inception-vm.js](workflow/inception-vm.js) calls `demo:playwright/vm-trynix.run` once;
+the browser never outlives that activity. The activity asks for `memory.gib = 8` because trynix
+keeps the whole closure in the tab: the Obelisk 0.42.0-rc.6 closure crashed the tab at 4 GiB and
+worked at 6 GiB. It may reach only trynix.dev and the two binary caches, and its lock lasts
+15 minutes. With `cpus = 4` a run takes under a minute on KVM and about 7 minutes on TCG. With
+one vCPU, TCG boots trynix's inner VM but the command inside it outlasts trynix's 120 s limit.
+
 ## Check the demo
 
 `just verify` checks the Obelisk deployment and both exec approval policies. With a Docker daemon
@@ -159,8 +183,8 @@ After updating `flake.lock`, refresh the recorded tool versions with
 - [workflow/run.js](workflow/run.js) holds the durable sequence and cleanup.
 - [workflow/inception.js](workflow/inception.js) boots Obelisk on trynix.dev in the same browser.
 - [activity/](activity/) contains the host scripts that manage the Docker container and socket.
-- [deployment-vm.toml](deployment-vm.toml) declares the VM activity and its workflow,
-  [workflow/run-vm.js](workflow/run-vm.js).
+- [deployment-vm.toml](deployment-vm.toml) declares the VM activities and their workflows,
+  [workflow/run-vm.js](workflow/run-vm.js) and [workflow/inception-vm.js](workflow/inception-vm.js).
 - [browser/](browser/) builds the image containing Playwright.
 - [vm/](vm/) holds the Playwright script run inside the activity VM.
 - [page/](page/) holds the task-list page and its Node server.
