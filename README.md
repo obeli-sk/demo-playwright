@@ -8,7 +8,10 @@ Two Obelisk apps drive Chromium from durable JavaScript workflows:
   <img src="todoapp/screenshots/vnc-demo.gif" width="322" alt="VNC browser before and after the workflow adds Buy milk to the task list">
 
 - [inception/](inception/) opens [trynix.dev](https://trynix.dev/), boots Obelisk in an in-browser
-  VM and returns the output of `obelisk -v`.
+  VM and returns the output of `obelisk -v`. The multi-step workflow loads the page, selects the
+  store path, boots the VM and runs the command:
+
+  <img src="inception/screenshots/vnc-demo.gif" width="322" alt="VNC browser loading trynix, selecting the Obelisk store path, booting the VM and printing obelisk -v">
 
 Each app has two deployments. Chromium runs either in this repo's Docker image
 (`deployment-docker.toml`) or in an Obelisk activity VM (`deployment-vm.toml`).

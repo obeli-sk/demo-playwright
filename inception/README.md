@@ -43,4 +43,11 @@ just advance E_01M3GZGNBXR1RQW3V1SE2QDJMT   # repeat once per step
 ```
 
 Watch trynix select the package and boot through VNC between steps, or `just unpause E_...` to run
-the rest. A retried boot step waits for the boot already running in the page.
+the rest. A retried boot step waits for the boot already running in the page. Once booted, the
+workflow scrolls the console into view:
+
+<img src="screenshots/vnc-demo.gif" width="644" alt="VNC browser loading trynix, selecting the Obelisk store path, booting the VM and printing obelisk -v">
+
+To retake the GIF, run `just screenshots inception` with `just serve inception docker` running. It
+captures the browser after each step: page loaded, cache and store path set, VM booted, command
+run. Booting can take several minutes.

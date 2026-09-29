@@ -52,6 +52,6 @@ unpause execution_id:
 test-e2e backend:
   OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}} ./scripts/test-e2e.sh "$1"
 
-# Retakes <app>/screenshots through VNC; needs `just serve <app> docker`, and `just serve-page` for todoapp.
+# Retakes <app>/screenshots/vnc-demo.gif through VNC; needs `just serve <app> docker`, and `just serve-page` for todoapp.
 screenshots app:
   ./scripts/screenshots.sh "$1"

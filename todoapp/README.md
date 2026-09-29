@@ -33,17 +33,13 @@ just todoapp-multistep 'Buy milk'
 ```
 
 The workflow is submitted paused and advanced through browser startup. Connect a VNC viewer to the
-printed address:
-
-![VNC browser showing an empty task list](screenshots/vnc-before.png)
-
-Advance once to add the task (`o:2-eval`):
+printed address, which shows the empty task list, then advance once to add the task (`o:2-eval`):
 
 ```sh
 just advance E_01M3GZGNBXR1RQW3V1SE2QDJMT
 ```
 
-![VNC browser showing Buy milk in the task list](screenshots/vnc-task-added.png)
+<img src="screenshots/vnc-demo.gif" width="644" alt="VNC browser before and after the workflow adds Buy milk to the task list">
 
 Advance again to read the page (`o:3-eval`), then to clean up (`o:4-cleanup`), and once more for
 the result. Let each activity finish before advancing. `just unpause E_...` runs the rest without
@@ -60,6 +56,6 @@ just unpause E_...
 
 Set `HEADED=false` when starting the server to run the session browser without Xvfb and VNC.
 
-To retake the screenshots and the GIF in the top-level README, run `just screenshots todoapp` with the page
-server and `just serve todoapp docker` running. It drives the multi-step workflow and captures the
-browser through VNC before and after the task is added.
+To retake the GIF, run `just screenshots todoapp` with the page server and
+`just serve todoapp docker` running. It drives the multi-step workflow and captures the browser
+through VNC before and after the task is added.

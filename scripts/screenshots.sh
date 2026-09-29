@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: screenshots.sh <todoapp|inception>; retakes <app>/screenshots and the GIF through VNC while `just serve <app> docker` runs.
+# Usage: screenshots.sh <todoapp|inception>; retakes <app>/screenshots/vnc-demo.gif through VNC while `just serve <app> docker` runs.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -21,9 +21,9 @@ finished_children() {
 capture() {
   # A fresh connection can get x11vnc's stale frame; capture after it has polled the screen.
   vncdo -s "${vnc/:/::}" capture "$tmp/warmup.png" pause 1 capture "$tmp/$1.png"
-  magick "$tmp/$1.png" -bordercolor black -border 1 -trim +repage "$out/$1.png"
-  frames+=("$out/$1.png")
-  printf 'Wrote %s/%s.png\n' "$out" "$1"
+  magick "$tmp/$1.png" -bordercolor black -border 1 -trim +repage "$tmp/$1-cropped.png"
+  frames+=("$tmp/$1-cropped.png")
+  printf 'Captured %s\n' "$1"
 }
 
 start() {
@@ -34,7 +34,7 @@ start() {
   execution_id=$(sed -n 's/^Execution: //p' <<<"$started")
 }
 
-# Usage: step <child activities finished> <timeout seconds> <screenshot name>
+# Usage: step <child activities finished> <timeout seconds> <frame name>
 step() {
   obelisk execution advance "$execution_id" >/dev/null
   local deadline=$((SECONDS + $2))
