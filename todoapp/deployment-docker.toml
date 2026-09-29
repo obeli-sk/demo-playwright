@@ -1,5 +1,19 @@
 [[activity_exec]]
-ffqn = "demo:playwright/browser.start"
+ffqn = "demo:playwright/browser.run"
+location = "activity/run.sh"
+params = [
+  { name = "url", type = "string" },
+  { name = "code", type = "string" },
+]
+return_type = "result<string, string>"
+exec.lock_expiry.seconds = 120
+max_retries = 2
+max_output_bytes = 65536
+env_vars = ["PATH"]
+
+# Multi-step browser session for `just *-multistep`: VNC and `just advance` work between steps.
+[[activity_exec]]
+ffqn = "demo:playwright/browser-session.start"
 location = "activity/start.sh"
 params = [
   { name = "container-name", type = "string" },
@@ -11,11 +25,11 @@ exec.lock_expiry.seconds = 45
 max_retries = 3
 env_vars = [
   "PATH",
-  { key = "HEADED", value = "${HEADED:-false}" },
+  { key = "HEADED", value = "${HEADED:-true}" },
 ]
 
 [[activity_exec]]
-ffqn = "demo:playwright/browser.eval"
+ffqn = "demo:playwright/browser-session.eval"
 location = "activity/eval.sh"
 params = [
   { name = "socket", type = "string" },
@@ -28,7 +42,7 @@ max_output_bytes = 65536
 env_vars = ["PATH"]
 
 [[activity_exec]]
-ffqn = "demo:playwright/browser.cleanup"
+ffqn = "demo:playwright/browser-session.cleanup"
 location = "activity/cleanup.sh"
 params = [
   { name = "container-name", type = "string" },
@@ -40,17 +54,17 @@ max_retries = 3
 env_vars = ["PATH"]
 
 [[workflow_js]]
-ffqn = "demo:playwright/workflow.run"
+ffqn = "demo:playwright/todoapp.run"
 location = "workflow/run.js"
+params = [{ name = "task", type = "string" }]
+return_type = "result<record { title: string, tasks: list<string> }, string>"
+
+[[workflow_js]]
+ffqn = "demo:playwright/todoapp-multistep.run"
+location = "workflow/multistep.js"
 params = [
   { name = "session-id", type = "string" },
   { name = "task", type = "string" },
   { name = "pause-seconds", type = "u32" },
 ]
 return_type = "result<record { title: string, tasks: list<string> }, string>"
-
-[[workflow_js]]
-ffqn = "demo:playwright/workflow.inception"
-location = "workflow/inception.js"
-params = [{ name = "store-path", type = "string" }]
-return_type = "result<string, string>"

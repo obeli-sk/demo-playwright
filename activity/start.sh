@@ -33,7 +33,8 @@ socket_path=$(json_arg "${2-}" "socket")
 url=$(json_arg "${3-}" "url")
 
 use_host_network=false
-if [[ "$url" =~ ^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?(/|$) ]]; then
+# `obelisk-host` names the host, as it does inside an activity VM.
+if [[ "$url" =~ ^https?://(localhost|127\.0\.0\.1|obelisk-host)(:[0-9]+)?(/|$) ]]; then
   use_host_network=true
 fi
 
@@ -52,7 +53,7 @@ docker_args=(
 )
 
 if [ "$use_host_network" = "true" ]; then
-  docker_args+=(--network host -e VNC_LISTEN=127.0.0.1)
+  docker_args+=(--network host --add-host obelisk-host:127.0.0.1 -e VNC_LISTEN=127.0.0.1)
 elif [ "${HEADED:-}" = "true" ]; then
   docker_args+=(-p "127.0.0.1::5900")
 fi

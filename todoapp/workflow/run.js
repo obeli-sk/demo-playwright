@@ -1,4 +1,4 @@
-import * as browser from "demo:playwright/vm-browser";
+import * as browser from "demo:playwright/browser";
 
 export default function run(task) {
   if (!task || !task.trim()) throw "task must not be empty";

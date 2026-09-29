@@ -9,7 +9,7 @@ RUN apt-get update \
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY server.js entrypoint.sh ./
+COPY server.js run.js entrypoint.sh ./
 RUN chmod +x /app/entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]

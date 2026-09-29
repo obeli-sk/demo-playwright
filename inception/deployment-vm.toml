@@ -1,0 +1,38 @@
+# trynix keeps the whole booted closure in the tab's memory.
+[[activity_vm]]
+ffqn = "demo:playwright/browser.run"
+location = "vm/browser.js"
+params = [
+  { name = "url", type = "string" },
+  { name = "code", type = "string" },
+]
+return_type = "result<string, string>"
+max_output_bytes = 65536
+store_paths = [
+  "/nix/store/z5piarlh57mjwr4c9w318ay97sxr6c9m-nodejs-slim-24.20.0",
+  "/nix/store/0k9k01y3zfnkbh71jq6vx08g572qjrpr-playwright-core-1.63.0",
+  "/nix/store/i08h6m15rm5n2w13lc2s5kq5v607q626-playwright-chromium-headless-shell",
+  "/nix/store/71mxn2pyq807r32qsd2mdszkajhlb39q-dejavu-fonts-2.37",
+]
+exec.lock_expiry.seconds = 900
+max_retries = 0
+memory.gib = 8
+cpus = 4
+
+[[activity_vm.allowed_host]]
+pattern = "https://trynix.dev"
+methods = ["GET"]
+
+[[activity_vm.allowed_host]]
+pattern = "https://obeli-sk.cachix.org"
+methods = ["GET", "HEAD"]
+
+[[activity_vm.allowed_host]]
+pattern = "https://cache.nixos.org"
+methods = ["GET", "HEAD"]
+
+[[workflow_js]]
+ffqn = "demo:playwright/inception.run"
+location = "workflow/run.js"
+params = [{ name = "store-path", type = "string" }]
+return_type = "result<string, string>"

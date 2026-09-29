@@ -1,4 +1,4 @@
-import * as trynix from "demo:playwright/vm-trynix";
+import * as browser from "demo:playwright/browser";
 
 const TRYNIX_URL = "https://trynix.dev/";
 const CACHE = {
@@ -7,13 +7,13 @@ const CACHE = {
 };
 const COMMAND = "obelisk -v";
 
-export default function inception(store_path) {
+export default function run(store_path) {
   if (!/^\/nix\/store\/[a-z0-9]{32}-[^/]+$/.test(store_path)) {
     throw "store-path must look like /nix/store/<hash>-<name>";
   }
 
-  // One VM activity loads trynix, boots the closure, and runs the command, so the browser never outlives it.
-  const run = JSON.parse(trynix.run(TRYNIX_URL, `
+  // One activity loads trynix, boots the closure, and runs the command, so the browser never outlives it.
+  const run = JSON.parse(browser.run(TRYNIX_URL, `
     await page.addInitScript(() => {
       window.__trynixTools = {};
       document.modelContext = {

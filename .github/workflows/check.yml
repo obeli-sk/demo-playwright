@@ -17,4 +17,4 @@ jobs:
       - run: nix develop --command just verify
       - run: nix develop --command ./scripts/dev-deps.sh && git diff --exit-code -- dev-deps.txt
       - run: nix develop --command just build
-      - run: nix develop --command just test-e2e
+      - run: nix develop --command just test-e2e docker

@@ -1,193 +1,91 @@
 # Playwright browser automation demo
 
-This app runs a durable JavaScript workflow that controls a Chromium session through three
-Obelisk exec activities: start the browser, interact with a page, and clean up. The browser runs
-in this app's own Docker image. A small task-list page, served from the host by
-[page/server.mjs](page/server.mjs), keeps the example independent of an external site or
-credentials.
+Two Obelisk apps drive Chromium from durable JavaScript workflows:
+
+- [todoapp/](todoapp/) adds a task to a small task-list page served from the host.
+- [inception/](inception/) opens [trynix.dev](https://trynix.dev/), boots Obelisk in an in-browser
+  VM and returns the output of `obelisk -v`.
+
+Each app has two deployments. Chromium runs either in this repo's Docker image
+(`deployment-docker.toml`) or in an Obelisk activity VM (`deployment-vm.toml`).
+
+- **Single step.** `demo:playwright/todoapp.run` and `demo:playwright/inception.run` call one
+  activity, `demo:playwright/browser.run(url, code)`, which launches a browser, runs one Playwright
+  snippet and closes it. Both deployments export the same FFQNs, so `just todoapp` and
+  `just inception` work unchanged against either.
+- **Multi step (Docker only).** `demo:playwright/todoapp-multistep.run` and
+  `demo:playwright/inception-multistep.run` keep one headed browser alive across the
+  `browser-session.start`, `.eval` and `.cleanup` activities. You can watch it through VNC and step
+  through the workflow with `just advance`.
+
+## Setup
+
+Install Nix. For the Docker deployments, start a Docker daemon and build the image. Copy
+`.envrc-example` to `.envrc` and run `direnv allow` to load the development shell and generate an
+API token. Without direnv, enter `nix develop` and run
+`export OBELISK_API_TOKEN=$(obelisk generate token)`. Use the same token in every shell that runs
+the CLI.
+
+```sh
+nix develop
+just build    # Docker image, only for deployment-docker.toml
+```
 
 ## Run
 
-Install Nix and start a Docker daemon. Copy `.envrc-example` to `.envrc` and run `direnv allow` to
-load the development shell and generate an API token. Without direnv, enter `nix develop` and run
-`export OBELISK_API_TOKEN=$(obelisk generate token)` before starting the server. Skip `nix develop`
-below if direnv already loaded the shell.
-
-Before starting the server, print its token with `printf '%s\n' "$OBELISK_API_TOKEN"` if you plan
-to use the CLI in another terminal.
+Start one app at a time. Each has its own database, but both listen on the default API port:
 
 ```sh
-nix develop
-just build
-just verify
-just serve-page &
-just serve
+just serve todoapp docker     # or: just serve todoapp vm
+just serve inception docker   # or: just serve inception vm
 ```
 
-`just serve-page` serves the task list at `http://127.0.0.1:8090/`. The browser container uses
-the host network to reach it. In another shell, run `export OBELISK_API_TOKEN='paste-token-here'` before submitting a run with a
-unique session ID. Each `.envrc` load generates a new token, so a new terminal can have a different
-value. You can instead run `just serve &` and the CLI in one shell, or replace the command in
-`.envrc` with a fixed token.
+Then follow [todoapp/README.md](todoapp/README.md) or [inception/README.md](inception/README.md).
+In short:
 
-```sh
-obelisk execution submit --follow demo:playwright/workflow.run -- \
-  '"first-run"' '"Buy milk"' 0
-```
+| Target | Docker | VM |
+| --- | --- | --- |
+| `just todoapp 'Buy milk'` | yes | yes |
+| `just todoapp-multistep 'Buy milk'` | yes | no |
+| `just inception [store-path]` | yes | yes |
+| `just inception-multistep [store-path]` | yes | no |
+| `just advance E_...` / `just unpause E_...` | yes | no |
 
-The workflow returns the page title and a task list containing `Buy milk`. The browser container
-and socket are removed in the workflow's `finally` block, including when a page action fails.
-Session IDs use lowercase letters, digits, and hyphens and may be up to 32 characters long.
+## Activity VMs
 
-To see recovery across a server restart, use a nonzero pause (in seconds) and stop Obelisk while
-the workflow is sleeping:
+The VM deployments need Obelisk 0.42.0-rc.7 or later, which adds the native QEMU backend.
+`just serve <app> vm` uses TCG by default; set `OBELISK_UNSTABLE_ACTIVITY_VM=qemu-kvm` on a host
+with `/dev/kvm`. The first deployment downloads the QEMU runtime bundle and the Nix closure of
+Node, Playwright and the Chromium headless shell. Each VM activity is a fresh guest, so
+[vm/browser.js](vm/browser.js) launches the browser, runs one snippet and exits.
 
-```sh
-obelisk execution submit --follow demo:playwright/workflow.run -- \
-  '"restart-demo"' '"Write a note"' 30
-```
+The guest reaches the host as `obelisk-host`. The Docker runner maps the same name to the host, so
+the workflows use `http://obelisk-host:8090/` on both backends. Chromium in the guest runs with
+`--ignore-certificate-errors`: guest HTTPS ends at Obelisk's guest proxy, which signs with a
+per-run CA that Chromium does not trust, and the host verifies the real upstream certificate
+before any request leaves.
 
-Restart with `just serve`. Obelisk resumes the workflow, reads the same browser page, and removes
-the container. The add-task action checks whether the task is already present before clicking, so
-an activity retry cannot add a duplicate.
+## Layout
 
-## Watch through VNC
-
-Start Obelisk with `HEADED=true just serve`. In a shell using the same API token, submit the
-workflow paused and advance it through browser startup:
-
-```sh
-just vnc-start watch-demo 'Buy milk'
-```
-
-The output includes the first blocked child, the local VNC address, and the execution ID. The port
-and ID will differ on your machine:
-
-```text
-success, current state: Paused(BlockedByJoinSet(o:1-start, ...))
-VNC: 127.0.0.1:32769
-Execution: E_01M3GZGNBXR1RQW3V1SE2QDJMT
-```
-
-Connect a local VNC viewer to the printed address. The browser is open, and the workflow remains
-paused before adding the task:
-
-![VNC browser showing an empty task list](screenshots/vnc-before.png)
-
-Advance the printed execution ID once to schedule the page action:
-
-```sh
-just vnc-advance E_01M3GZGNBXR1RQW3V1SE2QDJMT
-# success, current state: Paused(BlockedByJoinSet(o:2-eval, ...))
-```
-
-After the eval activity finishes, VNC shows the new task while the workflow is still paused:
-
-![VNC browser showing Buy milk in the task list](screenshots/vnc-task-added.png)
-
-Advance again to read the page (`o:3-eval`), then to schedule browser cleanup (`o:4-cleanup`),
-and once more to get the final result:
-
-```sh
-just vnc-advance E_01M3GZGNBXR1RQW3V1SE2QDJMT
-just vnc-advance E_01M3GZGNBXR1RQW3V1SE2QDJMT
-just vnc-advance E_01M3GZGNBXR1RQW3V1SE2QDJMT
-# success: {"ok":{"title":"Playwright task list","tasks":["Buy milk"]}}
-```
-
-Allow each activity to finish before advancing again. You can instead run
-`obelisk execution unpause E_...` to complete the remaining steps automatically; the
-browser closes during cleanup.
-
-## Inception: Obelisk inside the browser
-
-The Docker browser can also open [trynix.dev](https://trynix.dev/), which boots Nix store paths in
-an x86_64 VM running as QEMU compiled to WebAssembly. With `just build` done and `just serve`
-running, in a shell with the same API token:
-
-```sh
-just inception
-# Execution finished: OK: "obelisk 0.42.0-rc.6"
-```
-
-[workflow/inception.js](workflow/inception.js) adds the
-[obeli-sk Cachix cache](https://obeli-sk.cachix.org), selects the store path of
-`nix eval --raw github:obeli-sk/obelisk/latest-rc`, boots the VM, and returns the output of `obelisk -v` run in the guest. Pass another
-store path from that cache with `just inception /nix/store/...`. The page draws its terminal
-on a canvas, so the workflow drives trynix through the tools the page registers for
-[WebMCP](https://github.com/webmachinelearning/webmcp), which also return the command output.
-Booting outlasts a single browser activity, so the workflow starts the boot and polls it with
-durable sleeps.
-
-## Run in an activity VM
-
-The same page actions can run in a headless Chromium inside an Obelisk activity VM instead of
-Docker. This needs Obelisk 0.42.0-rc.7 or later, which adds the native QEMU backend.
-
-```sh
-nix develop
-just serve-page &
-just serve-vm
-```
-
-In another shell with the same API token:
-
-```sh
-obelisk execution submit --follow demo:playwright/workflow-vm.run -- '"Buy milk"'
-# {"ok":{"title":"Playwright task list","tasks":["Buy milk"]}}
-```
-
-The first deployment downloads the QEMU runtime bundle and the Nix closure of Node, Playwright,
-and the Chromium headless shell. Each VM activity is a fresh guest, so
-[vm/browser.js](vm/browser.js) launches the browser, runs one page action, and exits within a
-single activity. The guest reaches the host page as `http://obelisk-host:8090/`, allowed by
-`app.toml` and [deployment-vm.toml](deployment-vm.toml). Set
-`OBELISK_UNSTABLE_ACTIVITY_VM=qemu-kvm` on a host with `/dev/kvm` to use KVM instead of TCG. `just test-e2e-vm` runs the VM workflow end to end.
-
-Chromium in the guest runs with `--ignore-certificate-errors`. Guest HTTPS ends at Obelisk's guest
-proxy, which signs with a per-run CA that Chromium does not trust, and the host verifies the real
-upstream certificate before any request leaves.
-
-### Inception inside the activity VM
-
-`just inception` also works against `just serve-vm`. Both deployments export
-`demo:playwright/workflow.inception`, so the client does not change; the VM deployment implements it
-inside a single VM activity. Chromium opens trynix.dev in the guest, boots the store path there in
-QEMU compiled to WebAssembly, and returns the output of `obelisk -v`:
-
-```sh
-OBELISK_UNSTABLE_ACTIVITY_VM=qemu-kvm just serve-vm   # in one shell
-just inception                                       # in another, with the same API token
-# Execution finished: OK: "obelisk 0.42.0-rc.6"
-```
-
-[workflow/inception-vm.js](workflow/inception-vm.js) calls `demo:playwright/vm-trynix.run` once;
-the browser never outlives that activity. The activity asks for `memory.gib = 8` because trynix
-keeps the whole closure in the tab: the Obelisk 0.42.0-rc.6 closure crashed the tab at 4 GiB and
-worked at 6 GiB. It may reach only trynix.dev and the two binary caches, and its lock lasts
-15 minutes. With `cpus = 4` a run takes under a minute on KVM and about 7 minutes on TCG. With
-one vCPU, TCG boots trynix's inner VM but the command inside it outlasts trynix's 120 s limit.
+- [browser/](browser/) builds the Docker image. `server.js` serves a long-lived browser session
+  over a socket; `run.js` runs one snippet and exits.
+- [activity/](activity/) holds the exec activity scripts: `run.sh` for the single step, and
+  `start.sh`, `eval.sh`, `cleanup.sh` for the session.
+- [vm/](vm/) holds the Playwright script run inside the activity VM.
+- `todoapp/` and `inception/` each hold `app.toml`, `server.toml`, both deployments and their
+  workflows. Deployment files must be local to the deployment directory, so `activity/` and `vm/`
+  are symlinked into each app.
 
 ## Check the demo
 
-`just verify` checks the Obelisk deployment and both exec approval policies. With a Docker daemon
-running, `just test-e2e` starts the page server and Obelisk, runs the full workflow, and checks that
-its container was removed.
+`just verify` checks both Docker deployments and their exec approval policies; `just verify-vm`
+checks the VM deployments. With a Docker daemon running, `just test-e2e` starts the page server
+and Obelisk, runs both todoapp workflows and checks that the session container was removed.
+`just test-e2e vm` runs the single-step todoapp workflow in an activity VM.
 
-After updating `flake.lock`, refresh the recorded tool versions with
-`nix develop -c ./scripts/dev-deps.sh`.
-
-## How it fits together
-
-- [deployment.toml](deployment.toml) declares three exec activities and two JS workflows.
-- [workflow/run.js](workflow/run.js) holds the durable sequence and cleanup.
-- [workflow/inception.js](workflow/inception.js) boots Obelisk on trynix.dev in the same browser.
-- [activity/](activity/) contains the host scripts that manage the Docker container and socket.
-- [deployment-vm.toml](deployment-vm.toml) declares the VM activities and their workflows,
-  [workflow/run-vm.js](workflow/run-vm.js) and [workflow/inception-vm.js](workflow/inception-vm.js).
-- [browser/](browser/) builds the image containing Playwright.
-- [vm/](vm/) holds the Playwright script run inside the activity VM.
-- [page/](page/) holds the task-list page and its Node server.
+After changing a script in `activity/`, run `just verify` and copy the digests it prints into both
+apps' `app.toml` and `server.toml`. After updating `flake.lock`, refresh the recorded tool versions
+with `nix develop -c ./scripts/dev-deps.sh`.
 
 The browser runner is adapted from the MIT-licensed public `obeli-sk/components` Playwright
 component. The app owns its image and activity scripts, so it does not depend on that repository

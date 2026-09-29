@@ -6,34 +6,48 @@ vm_backend := env("OBELISK_UNSTABLE_ACTIVITY_VM", "qemu-tcg")
 build:
   docker build -t {{image}} browser
 
-verify:
-  obelisk server verify --server-config server.toml --app-config app.toml --deployment deployment.toml
-
 serve-page:
-  node page/server.mjs
+  node todoapp/page/server.mjs
 
-serve:
-  obelisk server run --server-config server.toml --app-config app.toml --deployment deployment.toml
+# Runs `app` (todoapp or inception) with Chromium in Docker or in activity VMs.
+serve app backend="docker":
+  #!/usr/bin/env bash
+  set -euo pipefail
+  cd "$1"
+  if [ "$2" = vm ]; then export OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}}; fi
+  exec obelisk server run --server-config server.toml --app-config app.toml --deployment "deployment-$2.toml"
 
-# Boots the latest obelisk RC from Cachix on trynix.dev and prints `obelisk -v`. Chromium runs in
-# Docker under `just serve` and inside one activity VM under `just serve-vm`.
+verify: (_verify "todoapp" "docker") (_verify "inception" "docker")
+
+verify-vm: (_verify "todoapp" "vm") (_verify "inception" "vm")
+
+_verify app backend:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  cd "$1"
+  if [ "$2" = vm ]; then export OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}}; fi
+  obelisk server verify --server-config server.toml --app-config app.toml --deployment "deployment-$2.toml"
+
+todoapp task:
+  ./scripts/submit-single-step.sh demo:playwright/todoapp.run "$(jq -cn --arg value "$1" '$value')"
+
+# Docker only: submits paused, advances through browser startup and prints the VNC address.
+todoapp-multistep task pause_seconds="0":
+  ./scripts/start-multistep.sh demo:playwright/todoapp-multistep.run "$(jq -cn --arg value "$1" '$value')" "$2"
+
+# Boots `store_path` (default: the latest obelisk RC) on trynix.dev and prints `obelisk -v`.
 inception store_path=`nix eval --raw github:obeli-sk/obelisk/latest-rc`:
-  obelisk execution submit --follow demo:playwright/workflow.inception -- "$(jq -cn --arg value "$1" '$value')"
+  ./scripts/submit-single-step.sh demo:playwright/inception.run "$(jq -cn --arg value "$1" '$value')"
 
-vnc-start session task:
-  ./scripts/start-vnc.sh "$1" "$2"
+# Docker only: like `todoapp-multistep`.
+inception-multistep store_path=`nix eval --raw github:obeli-sk/obelisk/latest-rc`:
+  ./scripts/start-multistep.sh demo:playwright/inception-multistep.run "$(jq -cn --arg value "$1" '$value')"
 
-vnc-advance execution_id:
+advance execution_id:
   obelisk execution advance "$1"
 
-test-e2e:
-  ./scripts/test-e2e.sh
+unpause execution_id:
+  obelisk execution unpause "$1"
 
-verify-vm:
-  OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}} obelisk server verify --server-config server.toml --app-config app.toml --deployment deployment-vm.toml
-
-serve-vm:
-  OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}} obelisk server run --server-config server.toml --app-config app.toml --deployment deployment-vm.toml
-
-test-e2e-vm:
-  OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}} ./scripts/test-e2e.sh vm
+test-e2e backend="docker":
+  ./scripts/test-e2e.sh "$1"

@@ -1,7 +1,7 @@
-import * as browser from "demo:playwright/browser";
+import * as browser from "demo:playwright/browser-session";
 import * as obelisk from "obelisk:workflow@1.0.0";
 
-export default function run(session_id, task, pause_seconds) {
+export default function multistep(session_id, task, pause_seconds) {
   if (!/^[a-z0-9][a-z0-9-]{0,31}$/.test(session_id)) {
     throw "session-id must be 1 to 32 lowercase letters, digits, or hyphens";
   }
@@ -10,7 +10,7 @@ export default function run(session_id, task, pause_seconds) {
   const container = `demo-playwright-${session_id}`;
   const socket = `/tmp/demo-playwright/${session_id}.sock`;
   try {
-    browser.start(container, socket, "http://127.0.0.1:8090/");
+    browser.start(container, socket, "http://obelisk-host:8090/");
 
     const addTask = `
       const task = ${JSON.stringify(task)};

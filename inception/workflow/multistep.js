@@ -1,5 +1,4 @@
-import * as browser from "demo:playwright/browser";
-import * as obelisk from "obelisk:workflow@1.0.0";
+import * as browser from "demo:playwright/browser-session";
 
 const TRYNIX_URL = "https://trynix.dev/";
 const CACHE = {
@@ -7,16 +6,17 @@ const CACHE = {
   key: "obeli-sk.cachix.org-1:31iM9GWSEhAXvvuTWQ7CvAcwvgRzsuJ9yJghywSd3Jw=",
 };
 const COMMAND = "obelisk -v";
-const BOOT_POLLS = 120;
 
-export default function inception(store_path) {
+export default function multistep(session_id, store_path) {
+  if (!/^[a-z0-9][a-z0-9-]{0,31}$/.test(session_id)) {
+    throw "session-id must be 1 to 32 lowercase letters, digits, or hyphens";
+  }
   if (!/^\/nix\/store\/[a-z0-9]{32}-[^/]+$/.test(store_path)) {
     throw "store-path must look like /nix/store/<hash>-<name>";
   }
 
-  const session = obelisk.randomString(12, 13).toLowerCase();
-  const container = `demo-playwright-inception-${session}`;
-  const socket = `/tmp/demo-playwright/inception-${session}.sock`;
+  const container = `demo-playwright-${session_id}`;
+  const socket = `/tmp/demo-playwright/${session_id}.sock`;
   try {
     browser.start(container, socket, TRYNIX_URL);
 
@@ -29,28 +29,25 @@ export default function inception(store_path) {
         };
       });
       await page.reload({ waitUntil: "domcontentloaded" });
-      await page.waitForFunction(() => window.__trynixTools?.boot);
+      await page.waitForFunction(() => window.__trynixTools?.boot, null, { timeout: 120000 });
       await page.evaluate(async ([cache, storePath]) => {
         const tools = window.__trynixTools;
         await tools["set-caches"].execute({ caches: [cache] });
         await tools["select-packages"].execute({ storePaths: [storePath] });
-        window.__trynixBoot = null;
-        tools.boot.execute({}).then(
-          (res) => { window.__trynixBoot = { ok: res.content[0].text }; },
-          (err) => { window.__trynixBoot = { err: String(err?.message ?? err) }; },
-        );
       }, [${JSON.stringify(CACHE)}, ${JSON.stringify(store_path)}]);
       return null;
     `);
 
-    let boot = null;
-    for (let i = 0; i < BOOT_POLLS && boot === null; i++) {
-      obelisk.sleep({ seconds: 5 });
-      boot = JSON.parse(browser.eval(socket, "return await page.evaluate(() => window.__trynixBoot);"));
-    }
-    if (boot === null) throw "timed out waiting for the trynix VM to boot";
-    if (boot.err !== undefined) throw `trynix boot failed: ${boot.err}`;
-    console.log(`trynix: ${boot.ok}`);
+    // A retried boot awaits the one already in flight instead of starting another.
+    const boot = JSON.parse(browser.eval(socket, `
+      return await page.evaluate(async () => {
+        window.__trynixBoot ??= window.__trynixTools.boot.execute({});
+        const res = await window.__trynixBoot;
+        return { isError: !!res.isError, text: res.content[0].text };
+      });
+    `));
+    if (boot.isError) throw `trynix boot failed: ${boot.text}`;
+    console.log(`trynix: ${boot.text}`);
 
     const run = JSON.parse(browser.eval(socket, `
       return JSON.parse(await page.evaluate(async (command) =>

@@ -1,24 +1,17 @@
 #!/usr/bin/env bash
+# Usage: start-multistep.sh <workflow-ffqn> [json-param...]; the session ID is prepended as the first parameter.
 set -euo pipefail
-cd "$(dirname "$0")/.."
 
-session=${1:?session ID required}
-task=${2:?task required}
-if [[ ! "$session" =~ ^[a-z0-9][a-z0-9-]{0,31}$ ]]; then
-  printf 'Session ID must be 1 to 32 lowercase letters, digits, or hyphens\n' >&2
-  exit 1
-fi
+ffqn=${1:?workflow FFQN required}
+shift
 
+execution_id=$(obelisk generate execution-id)
+session=$(tr '[:upper:]' '[:lower:]' <<<"${execution_id#E_}")
 container="demo-playwright-$session"
 socket="/tmp/demo-playwright/$session.sock"
-if docker container inspect "$container" >/dev/null 2>&1; then
-  printf 'Container %s already exists; choose another session ID\n' "$container" >&2
-  exit 1
-fi
-execution_id=$(obelisk generate execution-id)
-obelisk execution submit --paused --execution-id "$execution_id" demo:playwright/workflow.run -- \
-  "$(jq -cn --arg value "$session" '$value')" \
-  "$(jq -cn --arg value "$task" '$value')" 0
+
+obelisk execution submit --paused --execution-id "$execution_id" "$ffqn" -- \
+  "$(jq -cn --arg value "$session" '$value')" "$@"
 obelisk execution advance "$execution_id"
 
 for _ in $(seq 1 120); do
@@ -33,7 +26,7 @@ for _ in $(seq 1 120); do
       exit 0
     fi
     if docker container inspect "$container" >/dev/null 2>&1; then
-      printf 'Browser is running without VNC. Start Obelisk with HEADED=true just serve.\n' >&2
+      printf 'Browser is running without VNC. Start Obelisk without HEADED=false.\nExecution: %s\n' "$execution_id" >&2
       exit 1
     fi
   fi
