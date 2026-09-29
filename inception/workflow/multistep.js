@@ -43,6 +43,8 @@ export default function multistep(session_id, store_path) {
       return await page.evaluate(async () => {
         window.__trynixBoot ??= window.__trynixTools.boot.execute({});
         const res = await window.__trynixBoot;
+        // The console starts below the fold of the default 1280x720 viewport.
+        document.getElementById("console")?.scrollIntoView({ block: "end" });
         return { isError: !!res.isError, text: res.content[0].text };
       });
     `));
