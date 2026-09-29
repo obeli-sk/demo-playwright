@@ -1,6 +1,12 @@
 import * as browser from "demo:playwright/browser-session";
+import { runCancellableSubmit } from "demo:playwright-obelisk-ext/todoapp-steps";
 import * as obelisk from "obelisk:workflow@1.0.0";
 
+const URL = "http://obelisk-host:8090/";
+const SESSION_TIMEOUT = { minutes: 60 };
+
+// Cleanup supervisor (saga): owns the browser container, races the cancellable steps workflow
+// against a timeout and always removes the container. https://obeli.sk/docs/latest/patterns/cleanup-supervisor/
 export default function multistep(session_id, task, pause_seconds) {
   if (!/^[a-z0-9][a-z0-9-]{0,31}$/.test(session_id)) {
     throw "session-id must be 1 to 32 lowercase letters, digits, or hyphens";
@@ -9,30 +15,30 @@ export default function multistep(session_id, task, pause_seconds) {
 
   const container = `demo-playwright-${session_id}`;
   const socket = `/tmp/demo-playwright/${session_id}.sock`;
+  let result = null;
+  let error = null;
   try {
-    browser.start(container, socket, "http://obelisk-host:8090/");
-
-    const addTask = `
-      const task = ${JSON.stringify(task)};
-      const items = page.locator("#items li");
-      if (!(await items.allTextContents()).includes(task)) {
-        await page.getByLabel("Task").fill(task);
-        await page.getByRole("button", { name: "Add task" }).click();
-      }
-      return await items.allTextContents();
-    `;
-    const tasks = JSON.parse(browser.eval(socket, addTask));
-    if (!tasks.includes(task)) throw "the task did not appear in the page";
-
-    if (pause_seconds > 0) obelisk.sleep({ seconds: pause_seconds });
-
-    return JSON.parse(browser.eval(socket, `
-      return {
-        title: await page.title(),
-        tasks: await page.locator("#items li").allTextContents(),
-      };
-    `));
-  } finally {
-    browser.cleanup(container, socket);
+    browser.start(container, socket, URL);
+    const race = obelisk.createJoinSet({ name: "session" });
+    try {
+      runCancellableSubmit(race, socket, task, pause_seconds);
+      const timeout = race.submitDelay(SESSION_TIMEOUT);
+      result = race.joinNext();
+      if (race.lastId === timeout) error = "session timed out";
+    } finally {
+      // Cancels whichever of the steps and the timeout is still pending.
+      race.close();
+    }
+  } catch (e) {
+    error = e instanceof obelisk.ChildError && e.cancelled ? "session cancelled" : e;
   }
+
+  try {
+    browser.cleanup(container, socket);
+  } catch (e) {
+    console.log(`Cleanup failed for ${container}: ${String(e)}`);
+    if (error === null) error = e;
+  }
+  if (error !== null) throw error;
+  return result;
 }

@@ -49,6 +49,9 @@ advance execution_id:
 unpause execution_id:
   obelisk execution unpause "$1"
 
+cancel execution_id:
+  obelisk execution cancel "$1"
+
 test-e2e backend:
   OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}} ./scripts/test-e2e.sh "$1"
 

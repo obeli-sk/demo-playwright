@@ -32,6 +32,7 @@ start() {
   printf '%s\n' "$started"
   vnc=$(sed -n 's/^VNC: //p' <<<"$started")
   execution_id=$(sed -n 's/^Execution: //p' <<<"$started")
+  supervisor_id=$(sed -n 's/^Supervisor: //p' <<<"$started")
 }
 
 # Usage: step <child activities finished> <timeout seconds> <frame name>
@@ -53,15 +54,15 @@ case $app in
   todoapp)
     start demo:playwright/todoapp-multistep.run '"Buy milk"' 0
     capture vnc-before
-    step 2 60 vnc-task-added
+    step 1 60 vnc-task-added
     ;;
   inception)
     store_path=$(nix eval --raw github:obeli-sk/obelisk/latest-rc)
     start demo:playwright/inception-multistep.run "$(jq -cn --arg value "$store_path" '$value')"
     capture vnc-loaded
-    step 2 300 vnc-configured
-    step 3 900 vnc-booted
-    step 4 120 vnc-command
+    step 1 300 vnc-configured
+    step 2 900 vnc-booted
+    step 3 120 vnc-command
     ;;
   *)
     printf 'Unknown app: %s\n' "$app" >&2
@@ -70,7 +71,7 @@ case $app in
 esac
 
 obelisk execution unpause "$execution_id"
-obelisk execution status --follow "$execution_id"
+obelisk execution status --follow "$supervisor_id"
 
 # Rendered at twice the 322 px width the top-level README displays it at.
 magick -delay 200 "${frames[@]}" -loop 0 -resize 644x -layers Optimize "$out/vnc-demo.gif"

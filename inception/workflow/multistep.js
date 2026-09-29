@@ -1,12 +1,12 @@
 import * as browser from "demo:playwright/browser-session";
+import { runCancellableSubmit } from "demo:playwright-obelisk-ext/inception-steps";
+import * as obelisk from "obelisk:workflow@1.0.0";
 
-const TRYNIX_URL = "https://trynix.dev/";
-const CACHE = {
-  url: "https://obeli-sk.cachix.org",
-  key: "obeli-sk.cachix.org-1:31iM9GWSEhAXvvuTWQ7CvAcwvgRzsuJ9yJghywSd3Jw=",
-};
-const COMMAND = "obelisk -v";
+const URL = "https://trynix.dev/";
+const SESSION_TIMEOUT = { minutes: 60 };
 
+// Cleanup supervisor (saga): owns the browser container, races the cancellable steps workflow
+// against a timeout and always removes the container. https://obeli.sk/docs/latest/patterns/cleanup-supervisor/
 export default function multistep(session_id, store_path) {
   if (!/^[a-z0-9][a-z0-9-]{0,31}$/.test(session_id)) {
     throw "session-id must be 1 to 32 lowercase letters, digits, or hyphens";
@@ -17,50 +17,30 @@ export default function multistep(session_id, store_path) {
 
   const container = `demo-playwright-${session_id}`;
   const socket = `/tmp/demo-playwright/${session_id}.sock`;
+  let result = null;
+  let error = null;
   try {
-    browser.start(container, socket, TRYNIX_URL);
-
-    // trynix exposes its tools through WebMCP; the terminal is a canvas, so they are the only way to read guest output.
-    browser.eval(socket, `
-      await page.addInitScript(() => {
-        window.__trynixTools = {};
-        document.modelContext = {
-          registerTool(tool) { window.__trynixTools[tool.name] = tool; },
-        };
-      });
-      await page.reload({ waitUntil: "domcontentloaded" });
-      await page.waitForFunction(() => window.__trynixTools?.boot, null, { timeout: 120000 });
-      await page.evaluate(async ([cache, storePath]) => {
-        const tools = window.__trynixTools;
-        await tools["set-caches"].execute({ caches: [cache] });
-        await tools["select-packages"].execute({ storePaths: [storePath] });
-      }, [${JSON.stringify(CACHE)}, ${JSON.stringify(store_path)}]);
-      return null;
-    `);
-
-    // A retried boot awaits the one already in flight instead of starting another.
-    const boot = JSON.parse(browser.eval(socket, `
-      return await page.evaluate(async () => {
-        window.__trynixBoot ??= window.__trynixTools.boot.execute({});
-        const res = await window.__trynixBoot;
-        // The console starts below the fold of the default 1280x720 viewport.
-        document.getElementById("console")?.scrollIntoView({ block: "end" });
-        return { isError: !!res.isError, text: res.content[0].text };
-      });
-    `));
-    if (boot.isError) throw `trynix boot failed: ${boot.text}`;
-    console.log(`trynix: ${boot.text}`);
-
-    const run = JSON.parse(browser.eval(socket, `
-      return JSON.parse(await page.evaluate(async (command) =>
-        (await window.__trynixTools["run-command"].execute({ command })).content[0].text,
-        ${JSON.stringify(COMMAND)}));
-    `));
-    if (run.status !== 0 || run.timedOut) {
-      throw `\`${COMMAND}\` failed with status ${run.status}: ${run.output}`;
+    browser.start(container, socket, URL);
+    const race = obelisk.createJoinSet({ name: "session" });
+    try {
+      runCancellableSubmit(race, socket, store_path);
+      const timeout = race.submitDelay(SESSION_TIMEOUT);
+      result = race.joinNext();
+      if (race.lastId === timeout) error = "session timed out";
+    } finally {
+      // Cancels whichever of the steps and the timeout is still pending.
+      race.close();
     }
-    return run.output;
-  } finally {
-    browser.cleanup(container, socket);
+  } catch (e) {
+    error = e instanceof obelisk.ChildError && e.cancelled ? "session cancelled" : e;
   }
+
+  try {
+    browser.cleanup(container, socket);
+  } catch (e) {
+    console.log(`Cleanup failed for ${container}: ${String(e)}`);
+    if (error === null) error = e;
+  }
+  if (error !== null) throw error;
+  return result;
 }

@@ -68,3 +68,13 @@ params = [
   { name = "store-path", type = "string" },
 ]
 return_type = "result<string, string>"
+
+# Submitted by inception-multistep.run; `-cancellable` lets `just cancel` stop it without skipping the cleanup.
+[[workflow_js]]
+ffqn = "demo:playwright/inception-steps.run-cancellable"
+location = "workflow/steps.js"
+params = [
+  { name = "socket", type = "string" },
+  { name = "store-path", type = "string" },
+]
+return_type = "result<string, string>"

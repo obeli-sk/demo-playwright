@@ -68,3 +68,14 @@ params = [
   { name = "pause-seconds", type = "u32" },
 ]
 return_type = "result<record { title: string, tasks: list<string> }, string>"
+
+# Submitted by todoapp-multistep.run; `-cancellable` lets `just cancel` stop it without skipping the cleanup.
+[[workflow_js]]
+ffqn = "demo:playwright/todoapp-steps.run-cancellable"
+location = "workflow/steps.js"
+params = [
+  { name = "socket", type = "string" },
+  { name = "task", type = "string" },
+  { name = "pause-seconds", type = "u32" },
+]
+return_type = "result<record { title: string, tasks: list<string> }, string>"
