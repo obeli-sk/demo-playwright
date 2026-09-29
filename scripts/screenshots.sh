@@ -6,6 +6,7 @@ cd "$(dirname "$0")/.."
 app=${1:?app required: todoapp or inception}
 out=$app/screenshots
 api=${OBELISK_API_URL:-http://127.0.0.1:5005}
+mkdir -p "$out"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 frames=()

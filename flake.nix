@@ -24,9 +24,7 @@
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
             curl
-            docker
             nodejs
-            qemu # activity VM backend
             jq
             just
             socat
@@ -35,6 +33,11 @@
             yq-go # scripts/sync-branch-protection.sh
             imagemagick # scripts/screenshots.sh
             python3Packages.vncdotool # scripts/screenshots.sh
+            docker
+            # activity-vm
+            qemu # activity VM backend
+            erofs-utils # Firecracker activity VM store images
+            firecracker # Firecracker activity VM runtime
           ];
         };
       });
