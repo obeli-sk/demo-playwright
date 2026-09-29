@@ -12,6 +12,10 @@ Two [Obelisk](https://obeli.sk) apps drive a Chromium browser with
 
   <img src="inception/screenshots/vnc-demo.gif" width="322" alt="VNC browser loading trynix, selecting the Obelisk store path, booting the VM and printing obelisk -v">
 
+  Run in an activity VM, the web UI's trace shows every HTTP request the browser made:
+
+  <img src="inception/screenshots/webui-trace.png" width="400" alt="Obelisk web UI trace of an inception run: the workflow, its browser.run activity and the HTTP requests Chromium made from the activity VM">
+
 ## How it works
 
 In Obelisk, a [workflow](https://obeli.sk/docs/latest/concepts/workflows/) is deterministic code
