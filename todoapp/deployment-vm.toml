@@ -1,6 +1,6 @@
 [[activity_vm]]
 ffqn = "demo:playwright/browser.run"
-location = "vm/browser.js"
+location = "runner/vm/browser.js"
 params = [
   { name = "url", type = "string" },
   { name = "code", type = "string" },

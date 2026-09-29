@@ -1,7 +1,7 @@
 # trynix keeps the whole booted closure in the tab's memory.
 [[activity_vm]]
 ffqn = "demo:playwright/browser.run"
-location = "vm/browser.js"
+location = "runner/vm/browser.js"
 params = [
   { name = "url", type = "string" },
   { name = "code", type = "string" },

@@ -42,6 +42,7 @@ if [ "${HEADED:-}" = "true" ]; then
     -shared \
     -nopw \
     -xkb \
+    -noxdamage \
     >/tmp/x11vnc.log 2>&1 &
   X11VNC_PID=$!
 

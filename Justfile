@@ -4,18 +4,18 @@ image := "demo-playwright:local"
 vm_backend := env("OBELISK_UNSTABLE_ACTIVITY_VM", "qemu-tcg")
 
 build:
-  docker build -t {{image}} browser
+  docker build -t {{image}} runner/docker/image
 
 serve-page:
   node todoapp/page/server.mjs
 
 # Runs `app` (todoapp or inception) with Chromium in Docker or in activity VMs.
-serve app backend="docker":
+serve app backend:
   #!/usr/bin/env bash
   set -euo pipefail
   cd "$1"
   if [ "$2" = vm ]; then export OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}}; fi
-  exec obelisk server run --server-config server.toml --app-config app.toml --deployment "deployment-$2.toml"
+  exec obelisk server run --server-config server.toml --app-config "app-$2.toml" --deployment "deployment-$2.toml"
 
 verify: (_verify "todoapp" "docker") (_verify "inception" "docker")
 
@@ -26,7 +26,7 @@ _verify app backend:
   set -euo pipefail
   cd "$1"
   if [ "$2" = vm ]; then export OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}}; fi
-  obelisk server verify --server-config server.toml --app-config app.toml --deployment "deployment-$2.toml"
+  obelisk server verify --server-config server.toml --app-config "app-$2.toml" --deployment "deployment-$2.toml"
 
 todoapp task:
   ./scripts/submit-single-step.sh demo:playwright/todoapp.run "$(jq -cn --arg value "$1" '$value')"
@@ -49,5 +49,9 @@ advance execution_id:
 unpause execution_id:
   obelisk execution unpause "$1"
 
-test-e2e backend="docker":
-  ./scripts/test-e2e.sh "$1"
+test-e2e backend:
+  OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}} ./scripts/test-e2e.sh "$1"
+
+# Retakes todoapp/screenshots through VNC; needs `just serve-page` and `just serve todoapp docker`.
+screenshots:
+  ./scripts/screenshots.sh

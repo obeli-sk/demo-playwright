@@ -1,4 +1,4 @@
-app_name = "demo-playwright-todoapp"
+app_name = "demo-playwright-inception"
 
 [public_env]
 PATH = {}
@@ -9,8 +9,3 @@ HEADED = { optional = true }
 "browser-session.start" = "sha256:82416d84afd27abc816b3ad548286ff17d60c45ef29fc55322d1b4db11c6ba3d"
 "browser-session.eval" = "sha256:669088127d32eebfc9074087b97cc6d145c9beecfef15bfada0af41348a21077"
 "browser-session.cleanup" = "sha256:457c08209bc72f8166160e6855304aa5caf59986eec067b22b06c1461400f6cb"
-
-# Task-list page reached from the activity VM through `obelisk-host`.
-[[outbound_http.allowed_host]]
-pattern = "http://localhost:8090"
-methods = ["GET"]

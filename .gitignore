@@ -1,4 +1,4 @@
 .direnv/
 .envrc
-browser/node_modules/
+runner/docker/image/node_modules/
 result

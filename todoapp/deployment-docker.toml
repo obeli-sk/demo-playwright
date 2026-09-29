@@ -1,6 +1,6 @@
 [[activity_exec]]
 ffqn = "demo:playwright/browser.run"
-location = "activity/run.sh"
+location = "runner/docker/run.sh"
 params = [
   { name = "url", type = "string" },
   { name = "code", type = "string" },
@@ -14,7 +14,7 @@ env_vars = ["PATH"]
 # Multi-step browser session for `just *-multistep`: VNC and `just advance` work between steps.
 [[activity_exec]]
 ffqn = "demo:playwright/browser-session.start"
-location = "activity/start.sh"
+location = "runner/docker/start.sh"
 params = [
   { name = "container-name", type = "string" },
   { name = "socket", type = "string" },
@@ -30,7 +30,7 @@ env_vars = [
 
 [[activity_exec]]
 ffqn = "demo:playwright/browser-session.eval"
-location = "activity/eval.sh"
+location = "runner/docker/eval.sh"
 params = [
   { name = "socket", type = "string" },
   { name = "code", type = "string" },
@@ -43,7 +43,7 @@ env_vars = ["PATH"]
 
 [[activity_exec]]
 ffqn = "demo:playwright/browser-session.cleanup"
-location = "activity/cleanup.sh"
+location = "runner/docker/cleanup.sh"
 params = [
   { name = "container-name", type = "string" },
   { name = "socket", type = "string" },

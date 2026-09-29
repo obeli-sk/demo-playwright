@@ -59,3 +59,7 @@ just unpause E_...
 ```
 
 Set `HEADED=false` when starting the server to run the session browser without Xvfb and VNC.
+
+To retake the screenshots and the GIF in the top-level README, run `just screenshots` with the page
+server and `just serve todoapp docker` running. It drives the multi-step workflow and captures the
+browser through VNC before and after the task is added.

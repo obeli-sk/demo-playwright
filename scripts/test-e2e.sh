@@ -7,7 +7,7 @@ case "$backend" in
   docker | vm) ;;
   *) printf 'Unknown backend %s, expected docker or vm\n' "$backend" >&2; exit 1 ;;
 esac
-if [ "$backend" = vm ]; then export OBELISK_UNSTABLE_ACTIVITY_VM=${OBELISK_UNSTABLE_ACTIVITY_VM:-qemu-tcg}; fi
+if [ "$backend" = vm ]; then export OBELISK_UNSTABLE_ACTIVITY_VM=${OBELISK_UNSTABLE_ACTIVITY_VM:-qemu-tcg}; else unset OBELISK_UNSTABLE_ACTIVITY_VM; fi
 
 export OBELISK_API_TOKEN=demo-playwright-test-token
 session="test-$(date +%s)-$$"
@@ -32,7 +32,7 @@ trap cleanup EXIT
 node page/server.mjs >>"$server_log" 2>&1 &
 page_pid=$!
 
-HEADED=false obelisk server run --server-config server.toml --app-config app.toml \
+HEADED=false obelisk server run --server-config server.toml --app-config "app-$backend.toml" \
   --deployment "deployment-$backend.toml" >>"$server_log" 2>&1 &
 server_pid=$!
 ready=false

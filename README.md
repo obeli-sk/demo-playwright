@@ -2,7 +2,11 @@
 
 Two Obelisk apps drive Chromium from durable JavaScript workflows:
 
-- [todoapp/](todoapp/) adds a task to a small task-list page served from the host.
+- [todoapp/](todoapp/) adds a task to a small task-list page served from the host. Watched through
+  VNC, the multi-step workflow adds the task to the page:
+
+  <img src="todoapp/screenshots/vnc-demo.gif" width="322" alt="VNC browser before and after the workflow adds Buy milk to the task list">
+
 - [inception/](inception/) opens [trynix.dev](https://trynix.dev/), boots Obelisk in an in-browser
   VM and returns the output of `obelisk -v`.
 
@@ -53,13 +57,24 @@ In short:
 
 ## Activity VMs
 
-The VM deployments need Obelisk 0.42.0-rc.7 or later, which adds the native QEMU backend.
-`just serve <app> vm` uses TCG by default; set `OBELISK_UNSTABLE_ACTIVITY_VM=qemu-kvm` on a host
-with `/dev/kvm`. The first deployment downloads the QEMU runtime bundle and the Nix closure of
-Node, Playwright and the Chromium headless shell. Each VM activity is a fresh guest, so
-[vm/browser.js](vm/browser.js) launches the browser, runs one snippet and exits.
+The VM deployments need Obelisk 0.42.0-rc.7 or later, which adds the native QEMU backend. The
+Justfile's `vm_backend` variable picks the backend. It defaults to `qemu-tcg` (software emulation,
+works anywhere); on a host with `/dev/kvm`, use `qemu-kvm`, which is much faster:
 
-The guest reaches the host as `obelisk-host`. The Docker runner maps the same name to the host, so
+```sh
+just vm_backend=qemu-kvm serve inception vm
+# or export it once per shell; `vm_backend` reads this variable
+export OBELISK_UNSTABLE_ACTIVITY_VM=qemu-kvm
+just serve inception vm
+```
+
+The same override applies to `just verify-vm` and `just test-e2e vm`.
+
+The first deployment downloads the QEMU runtime bundle and the Nix closure of Node, Playwright and
+the Chromium headless shell. Each VM activity is a fresh guest, so
+[runner/vm/browser.js](runner/vm/browser.js) launches the browser, runs one snippet and exits.
+
+The guest reaches the host as `obelisk-host`. The Docker scripts map the same name to the host, so
 the workflows use `http://obelisk-host:8090/` on both backends. Chromium in the guest runs with
 `--ignore-certificate-errors`: guest HTTPS ends at Obelisk's guest proxy, which signs with a
 per-run CA that Chromium does not trust, and the host verifies the real upstream certificate
@@ -67,24 +82,28 @@ before any request leaves.
 
 ## Layout
 
-- [browser/](browser/) builds the Docker image. `server.js` serves a long-lived browser session
-  over a socket; `run.js` runs one snippet and exits.
-- [activity/](activity/) holds the exec activity scripts: `run.sh` for the single step, and
-  `start.sh`, `eval.sh`, `cleanup.sh` for the session.
-- [vm/](vm/) holds the Playwright script run inside the activity VM.
-- `todoapp/` and `inception/` each hold `app.toml`, `server.toml`, both deployments and their
-  workflows. Deployment files must be local to the deployment directory, so `activity/` and `vm/`
-  are symlinked into each app.
+- `todoapp/` and `inception/` each hold `server.toml`, the workflows, and per backend an app policy
+  and a deployment. `app-docker.toml` allows only the exec activities; `app-vm.toml` allows only
+  the VM's outbound hosts.
+- [runner/](runner/) holds what runs the browser, shared by both apps. Deployment files must be
+  local to the deployment directory, so it is symlinked into each app.
+  - [runner/docker/image/](runner/docker/image/) builds the Docker image. `server.js` serves a
+    long-lived browser session over a socket; `run.js` runs one snippet and exits.
+  - [runner/docker/](runner/docker/) holds the exec activity scripts that drive the image:
+    `run.sh` for the single step, and `start.sh`, `eval.sh`, `cleanup.sh` for the session.
+  - [runner/vm/browser.js](runner/vm/browser.js) is the Playwright script run inside the activity
+    VM.
+- [scripts/](scripts/) holds the helpers behind the `just` targets.
 
 ## Check the demo
 
 `just verify` checks both Docker deployments and their exec approval policies; `just verify-vm`
-checks the VM deployments. With a Docker daemon running, `just test-e2e` starts the page server
+checks the VM deployments. With a Docker daemon running, `just test-e2e docker` starts the page server
 and Obelisk, runs both todoapp workflows and checks that the session container was removed.
 `just test-e2e vm` runs the single-step todoapp workflow in an activity VM.
 
-After changing a script in `activity/`, run `just verify` and copy the digests it prints into both
-apps' `app.toml` and `server.toml`. After updating `flake.lock`, refresh the recorded tool versions
+After changing a script in `runner/docker/`, run `just verify` and copy the digests it prints into both
+apps' `app-docker.toml` and `server.toml`. After updating `flake.lock`, refresh the recorded tool versions
 with `nix develop -c ./scripts/dev-deps.sh`.
 
 The browser runner is adapted from the MIT-licensed public `obeli-sk/components` Playwright

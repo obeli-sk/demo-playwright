@@ -5,10 +5,12 @@ cd "$(dirname "$0")/.."
 {
   printf 'curl %s\n' "$(curl --version | awk 'NR == 1 { print $2 }')"
   printf 'docker %s\n' "$(docker --version | awk '{ gsub(",", "", $3); print $3 }')"
+  magick --version | awk 'NR == 1 { print "imagemagick", $3 }'
   printf 'jq %s\n' "$(jq --version | sed 's/^jq-//')"
   just --version
   printf 'node %s\n' "$(node --version | sed 's/^v//')"
   obelisk --version
   qemu-system-x86_64 --version | awk 'NR == 1 { print "qemu", $4 }'
   socat -V | awk '/^socat version / { print $1, $2, $3 }'
+  vncdo --version
 } > dev-deps.txt

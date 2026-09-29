@@ -1,0 +1,6 @@
+app_name = "demo-playwright-todoapp"
+
+# Task-list page reached from the activity VM through `obelisk-host`.
+[[outbound_http.allowed_host]]
+pattern = "http://localhost:8090"
+methods = ["GET"]

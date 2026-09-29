@@ -1,0 +1,14 @@
+app_name = "demo-playwright-inception"
+
+# trynix.dev and the caches it fetches the booted closure from.
+[[outbound_http.allowed_host]]
+pattern = "https://trynix.dev"
+methods = ["GET"]
+
+[[outbound_http.allowed_host]]
+pattern = "https://obeli-sk.cachix.org"
+methods = ["GET", "HEAD"]
+
+[[outbound_http.allowed_host]]
+pattern = "https://cache.nixos.org"
+methods = ["GET", "HEAD"]
