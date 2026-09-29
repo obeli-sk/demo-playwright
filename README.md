@@ -65,7 +65,9 @@ just serve todoapp docker     # or: just serve todoapp vm
 just serve inception docker   # or: just serve inception vm
 ```
 
-Run one server at a time, since both use the same port.
+Run one server at a time, since both use the same port. The server also serves a web UI at
+<http://127.0.0.1:8080>, which shows each execution with its activities and, for activity VMs, the
+HTTP requests they made.
 
 | Command | Docker | VM |
 | --- | --- | --- |

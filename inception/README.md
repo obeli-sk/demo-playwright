@@ -27,6 +27,13 @@ just inception
 The in-browser VM is heavy: on the VM backend each run gets 8 GiB of memory and 4 CPUs, and
 without KVM it takes several minutes.
 
+On the VM backend, Obelisk records every HTTP request the activity makes. Open the execution in the
+web UI at <http://127.0.0.1:8080> and expand the activity to see what Chromium fetched and how
+long each request took. The Google Tag Manager request fails because the VM may only reach
+trynix.dev and the two binary caches:
+
+<img src="screenshots/webui-trace.png" width="800" alt="Obelisk web UI trace of an inception run: the workflow, its browser.run activity and the HTTP requests Chromium made from the activity VM">
+
 ## Multi step (Docker only)
 
 [workflow/multistep.js](workflow/multistep.js) opens trynix in a browser you can watch and

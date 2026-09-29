@@ -55,6 +55,10 @@ cancel execution_id:
 test-e2e backend:
   OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}} ./scripts/test-e2e.sh "$1"
 
+# Screenshots the web UI trace of an inception run, including the HTTP requests an activity VM made.
+webui-screenshot execution_id:
+  node scripts/webui-screenshot.js "$1" inception/screenshots/webui-trace.png
+
 # Retakes <app>/screenshots/vnc-demo.gif through VNC; needs `just serve <app> docker`, and `just serve-page` for todoapp.
 screenshots app:
   ./scripts/screenshots.sh "$1"
