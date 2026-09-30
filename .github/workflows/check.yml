@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  verify:
+  docker:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -15,9 +15,25 @@ jobs:
             extra-substituters = https://obeli-sk.cachix.org
             extra-trusted-public-keys = obeli-sk.cachix.org-1:31iM9GWSEhAXvvuTWQ7CvAcwvgRzsuJ9yJghywSd3Jw=
       - run: nix develop --command just verify-docker
-
       - run: nix develop --command ./scripts/dev-deps.sh && git diff --exit-code -- dev-deps.txt
       - run: nix develop --command just build
       - run: nix develop --command just test-e2e docker
 
-# TODO: Add VM verification + e2e
+  vm:
+    runs-on: ubuntu-24.04
+    env:
+      OBELISK_UNSTABLE_ACTIVITY_VM: qemu-kvm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nixbuild/nix-quick-install-action@v34
+        with:
+          nix_conf: |
+            extra-substituters = https://obeli-sk.cachix.org
+            extra-trusted-public-keys = obeli-sk.cachix.org-1:31iM9GWSEhAXvvuTWQ7CvAcwvgRzsuJ9yJghywSd3Jw=
+      - name: Enable KVM access
+        run: |
+          test -c /dev/kvm
+          sudo chmod a+rw /dev/kvm
+          test -w /dev/kvm
+      - run: nix develop --command just verify-vm
+      - run: nix develop --command just test-e2e vm
