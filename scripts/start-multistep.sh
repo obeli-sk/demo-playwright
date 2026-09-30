@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: start-multistep.sh <workflow-ffqn> [json-param...]; the session ID is prepended as the first parameter.
+# Usage: start-multistep.sh <workflow-ffqn> [json-param...]
 # Starts the browser, then leaves the steps workflow paused for `just advance` and lets the supervisor run.
 set -euo pipefail
 
@@ -12,13 +12,14 @@ get() {
   curl -fsS -H "Authorization: Bearer $OBELISK_API_TOKEN" -H accept:application/json "$api/v1/$1"
 }
 
+app=${ffqn#*/}
+app=${app%-multistep.run}
 execution_id=$(obelisk generate execution-id)
-session=$(tr '[:upper:]' '[:lower:]' <<<"${execution_id#E_}")
-container="demo-playwright-$session"
-socket="/tmp/demo-playwright/$session.sock"
+# Must match the names multistep.js derives from its execution ID.
+container="demo-playwright-$app-$execution_id"
+socket="/tmp/demo-playwright/$execution_id.sock"
 
-obelisk execution submit --paused --execution-id "$execution_id" "$ffqn" -- \
-  "$(jq -cn --arg value "$session" '$value')" "$@" >/dev/null
+obelisk execution submit --paused --execution-id "$execution_id" "$ffqn" -- "$@" >/dev/null
 # First step: start the browser.
 obelisk execution advance "$execution_id" >/dev/null
 

@@ -64,7 +64,6 @@ return_type = "result<string, string>"
 ffqn = "demo:playwright/inception-multistep.run"
 location = "workflow/multistep.js"
 params = [
-  { name = "session-id", type = "string" },
   { name = "store-path", type = "string" },
 ]
 return_type = "result<string, string>"

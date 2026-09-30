@@ -16,8 +16,8 @@ else
 fi
 
 export OBELISK_API_TOKEN=demo-playwright-test-token
-session="test-$(date +%s)-$$"
-container="demo-playwright-$session"
+execution_id=$(obelisk generate execution-id)
+container="demo-playwright-todoapp-$execution_id"
 server_log=$(mktemp)
 server_pid=""
 page_pid=""
@@ -64,8 +64,8 @@ jq -s -e ".[-1].ok == $expected" <<<"$result" >/dev/null
 printf 'Single-step todoapp workflow passed on %s\n' "$backend"
 if [ "$backend" = vm ]; then exit 0; fi
 
-result=$(obelisk execution submit --follow --json demo:playwright/todoapp-multistep.run -- \
-  "$(jq -nc --arg value "$session" '$value')" '"Buy milk"' 0)
+result=$(obelisk execution submit --follow --json --execution-id "$execution_id" \
+  demo:playwright/todoapp-multistep.run -- '"Buy milk"' 0)
 jq -s -e ".[-1].ok == $expected" <<<"$result" >/dev/null
 if docker inspect "$container" >/dev/null 2>&1; then
   printf 'Browser container was not cleaned up\n' >&2
