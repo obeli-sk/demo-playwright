@@ -4,17 +4,17 @@ import * as obelisk from "obelisk:workflow@1.0.0";
 
 const URL = "http://obelisk-host:8090/";
 const SESSION_TIMEOUT = { minutes: 60 };
+const APP_NAME = "demo-playwright-todoapp";
 
 // Cleanup supervisor (saga): owns the browser container, races the cancellable steps workflow
 // against a timeout and always removes the container. https://obeli.sk/docs/latest/patterns/cleanup-supervisor/
-export default function multistep(session_id, task, pause_seconds) {
-  if (!/^[a-z0-9][a-z0-9-]{0,31}$/.test(session_id)) {
-    throw "session-id must be 1 to 32 lowercase letters, digits, or hyphens";
-  }
+export default function multistep(task, pause_seconds) {
   if (!task || !task.trim()) throw "task must not be empty";
 
-  const container = `demo-playwright-${session_id}`;
-  const socket = `/tmp/demo-playwright/${session_id}.sock`;
+  // Docker names allow only [A-Za-z0-9_.-]; a derived execution ID also contains `:`.
+  const execution_id = String(obelisk.executionIdCurrent()).replace(/[^A-Za-z0-9_.-]/g, "_");
+  const container = `${APP_NAME}-${execution_id}`;
+  const socket = `/tmp/demo-playwright/${execution_id}.sock`;
   let result = null;
   let error = null;
   try {
