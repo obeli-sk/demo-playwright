@@ -14,10 +14,22 @@ serve app backend:
   #!/usr/bin/env bash
   set -euo pipefail
   cd "$1"
-  if [ "$2" = vm ]; then export OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}}; fi
-  exec obelisk server run --server-config server.toml --app-config "app-$2.toml" --deployment "deployment-$2.toml"
 
-verify: (_verify "todoapp" "docker") (_verify "inception" "docker")
+  server_config=""
+  if [ "$2" = vm ]; then
+    export OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}}
+  elif [ "$2" = docker ]; then
+    server_config="--server-config server-docker.toml"
+  else
+    echo "Unsupported deployment type: $2" >&2
+    exit 1
+  fi
+  exec obelisk server run \
+    $server_config \
+    --app-config "app-$2.toml" \
+    --deployment "deployment-$2.toml"
+
+verify-docker: (_verify "todoapp" "docker") (_verify "inception" "docker")
 
 verify-vm: (_verify "todoapp" "vm") (_verify "inception" "vm")
 
@@ -25,8 +37,20 @@ _verify app backend:
   #!/usr/bin/env bash
   set -euo pipefail
   cd "$1"
-  if [ "$2" = vm ]; then export OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}}; fi
-  obelisk server verify --server-config server.toml --app-config "app-$2.toml" --deployment "deployment-$2.toml"
+
+  server_config=""
+  if [ "$2" = vm ]; then
+    export OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}}
+  elif [ "$2" = docker ]; then
+    server_config="--server-config server-docker.toml"
+  else
+    echo "Unsupported deployment type: $2" >&2
+    exit 1
+  fi
+  obelisk server verify \
+    $server_config \
+    --app-config "app-$2.toml" \
+    --deployment "deployment-$2.toml"
 
 todoapp task:
   ./scripts/submit-single-step.sh demo:playwright/todoapp.run "$(jq -cn --arg value "$1" '$value')"

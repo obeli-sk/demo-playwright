@@ -1,5 +1,3 @@
-database.sqlite.directory = "${DATA_DIR}/demo-playwright-todoapp"
-
 [allowed_exec_activities]
 "browser.run" = "sha256:abfc57df8e0e53893ea6ce0ffac3baa337d81584910cdcdb47b7afc4692747fc"
 "browser-session.start" = "sha256:82416d84afd27abc816b3ad548286ff17d60c45ef29fc55322d1b4db11c6ba3d"

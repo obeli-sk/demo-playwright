@@ -130,8 +130,8 @@ The first start downloads the VM runtime and the browser, which takes a while.
 
 ## Layout
 
-- `todoapp/` and `inception/` each hold one app: its workflows, `server.toml`, and an app policy
-  (`app-*.toml`) and deployment (`deployment-*.toml`) per backend.
+- `todoapp/` and `inception/` each hold one app: its workflows, an app policy (`app-*.toml`) and
+  deployment (`deployment-*.toml`) per backend, and `server-docker.toml` for the Docker backend.
 - [runner/](runner/) runs the browser for both apps: [runner/docker/](runner/docker/) holds the
   Docker image and the scripts Obelisk calls as activities, and [runner/vm/](runner/vm/) holds the
   script that runs inside an activity VM.
@@ -139,11 +139,11 @@ The first start downloads the VM runtime and the browser, which takes a while.
 
 ## Development
 
-`just verify` and `just verify-vm` check the deployments. `just test-e2e docker` and
+`just verify-docker` and `just verify-vm` check the deployments. `just test-e2e docker` and
 `just test-e2e vm` run the todoapp workflows end to end.
 
 Obelisk only runs activity scripts whose digest is approved. After changing a script in
-`runner/docker/`, run `just verify` and copy the digests it prints into both apps'
-`app-docker.toml` and `server.toml`.
+`runner/docker/`, run `just verify-docker` and copy the digests it prints into both apps'
+`app-docker.toml` and `server-docker.toml`.
 
 The browser runner is adapted from the MIT-licensed `obeli-sk/components` Playwright component.
