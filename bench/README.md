@@ -19,14 +19,13 @@ vCPUs, as configured in its deployment.
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Echo | 158 ms (7) | 221 ms (7) | 471 ms (7) | 886 ms (7) | |
 | Curl | 189 ms (7) | 347 ms (7) | 981 ms (7) | 2,353 ms (7) | |
-| Todoapp | 808 ms (5) | 1,632 ms (5) | | | 505 ms (5) |
+| Todoapp | 808 ms (5) | 1,632 ms (5) | 13.357 s (5) | | 505 ms (5) |
 | Inception | 11.122 s (3) | 16.879 s (3) | | | 5.744 s (5) |
 
 Values are medians; parentheses give sample counts. Firecracker's echo image cache was warm.
 QEMU KVM's first two echo runs were about 450 ms, while
-its final five had a 217 ms median. QEMU TCG completed a todoapp warmup, then a measured run
-failed when Playwright timed out waiting for the task field. No successful series was recorded for
-that combination. The browser workloads were not measured on Bochs WASM or inception on QEMU TCG.
+its final five had a 217 ms median. The browser workloads were not measured on Bochs WASM or
+inception on QEMU TCG.
 
 ## Repeat
 
