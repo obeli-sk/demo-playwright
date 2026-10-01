@@ -1,0 +1,5 @@
+app_name = "demo-playwright-bench"
+
+[[outbound_http.allowed_host]]
+pattern = "http://localhost:8090"
+methods = ["GET"]

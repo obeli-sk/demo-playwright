@@ -9,7 +9,7 @@ build:
 serve-page:
   node todoapp/page/server.mjs
 
-# Runs `app` (todoapp or inception) with Chromium in Docker or in activity VMs.
+# Runs bench in an activity VM, or todoapp/inception in Docker or an activity VM.
 serve app backend:
   #!/usr/bin/env bash
   set -euo pipefail
@@ -31,7 +31,7 @@ serve app backend:
 
 verify-docker: (_verify "todoapp" "docker") (_verify "inception" "docker")
 
-verify-vm: (_verify "todoapp" "vm") (_verify "inception" "vm")
+verify-vm: (_verify "bench" "vm") (_verify "todoapp" "vm") (_verify "inception" "vm")
 
 _verify app backend:
   #!/usr/bin/env bash
@@ -69,6 +69,10 @@ inception-multistep store_path=`nix eval --raw github:obeli-sk/obelisk/latest-rc
 
 advance execution_id:
   obelisk execution advance "$1"
+
+# Prints warm Locked-to-Finished samples as CSV; start the matching server first.
+bench workload backend runs="7" warmups="2" value="":
+  @./scripts/bench.sh "$1" "$2" "$3" "$4" "$5"
 
 unpause execution_id:
   obelisk execution unpause "$1"

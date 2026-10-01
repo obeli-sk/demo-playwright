@@ -136,6 +136,27 @@ The first start downloads the VM runtime and the browser, which takes a while.
   Docker image and the scripts Obelisk calls as activities, and [runner/vm/](runner/vm/) holds the
   script that runs inside an activity VM.
 - [scripts/](scripts/) holds the helpers behind the `just` commands.
+- [bench/](bench/) holds the light VM activities and benchmark results.
+
+## Benchmarks
+
+[bench/](bench/) provides a Bash `printf` activity and a curl activity that fetches the local
+todoapp page through the VM's HTTP bridge. `just bench` also measures the existing single-step
+todoapp and inception activities. It prints CSV with each activity's persisted `Locked` to
+`Finished` duration, after two warmup runs by default:
+
+```sh
+just serve-page                         # separate terminal, needed for curl and todoapp
+just vm_backend=firecracker serve bench vm
+just bench echo firecracker > echo.csv  # separate terminal
+just bench curl firecracker > curl.csv
+```
+
+To measure the browser workloads, serve `todoapp` or `inception` with the chosen backend and run
+`just bench todoapp firecracker` or `just bench inception firecracker`. For Docker, use
+`just serve todoapp docker` or `just serve inception docker`, then label the corresponding command
+`docker`. The backend argument labels the output; the running server selects the actual backend.
+See [bench/README.md](bench/README.md) for the RC8 results, setup details, and the Docker timings.
 
 ## Development
 

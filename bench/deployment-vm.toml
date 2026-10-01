@@ -1,0 +1,29 @@
+[[activity_vm]]
+ffqn = "demo:bench/echo.run"
+content = '''#!/usr/bin/env bash
+printf '"hello"\n'
+'''
+params = []
+return_type = "result<string, string>"
+store_paths = ["/nix/store/2ndah67h0z5m31v2wkdmg2md4380ggr5-bash-interactive-5.3p15"]
+memory.mib = 512
+exec.lock_expiry.seconds = 120
+
+[[activity_vm]]
+ffqn = "demo:bench/curl.run"
+content = '''#!/usr/bin/env bash
+curl -fsS -o /dev/null http://obelisk-host:8090/
+printf '"ok"\n'
+'''
+params = []
+return_type = "result<string, string>"
+store_paths = [
+  "/nix/store/2ndah67h0z5m31v2wkdmg2md4380ggr5-bash-interactive-5.3p15",
+  "/nix/store/cp8qnyl8i0s62g3a1465i258mf5bcr6k-curl-8.22.0-bin",
+]
+memory.mib = 512
+exec.lock_expiry.seconds = 120
+
+[[activity_vm.allowed_host]]
+pattern = "http://localhost:8090"
+methods = ["GET"]
