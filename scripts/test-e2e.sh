@@ -15,7 +15,7 @@ else
   server_config=(--server-config server-docker.toml)
 fi
 
-export OBELISK_API_TOKEN=demo-playwright-test-token
+export OBELISK_API_TOKEN=$(obelisk generate token)
 execution_id=$(obelisk generate execution-id)
 container="demo-playwright-todoapp-$execution_id"
 server_log=$(mktemp)
