@@ -20,7 +20,7 @@ cache, pass its Nix store path, as in `just inception /nix/store/...`.
 
 ```sh
 just inception
-# Execution finished: OK: "obelisk 0.42.0-rc.10"
+# Execution finished: OK: "obelisk 0.42.0-rc.11"
 # Activity E_...: locked at ..., finished at ..., took 15.432s
 ```
 
