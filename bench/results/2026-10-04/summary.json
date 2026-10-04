@@ -17,7 +17,7 @@
   },
   "inception_store_path": "/nix/store/82b2qf8r29jykh3jlkq2dxk5nghgj23v-obelisk-0.42.0",
   "metric": "Persisted Locked to Finished elapsed milliseconds, including VM setup, command, and result persistence; excluding deployment verification, runtime downloads, and server startup.",
-  "method": "Sequential executions on one host, separate server and SQLite directory for each backend. Bash and curl shared a server; Chromium used a fresh server and database. Warmup runs excluded. All measured activities succeeded. Docker was not measured because its daemon was unavailable.",
+  "method": "Sequential executions on one host. VM backends used separate servers and SQLite directories; Bash and curl shared a server, and Chromium used fresh servers/databases. Docker was measured separately through the existing inception server on standard ports. Warmup runs excluded. All measured activities succeeded.",
   "resources": {
     "echo": {
       "memory_mib": 512,
@@ -68,6 +68,30 @@
     {
       "file": "todoapp/page/index.html",
       "sha256": "b9125b0f13586981cd49035fecb552698727824ff52d0dbaeaec3bb2a2d45f1a"
+    },
+    {
+      "file": "inception/deployment-docker.toml",
+      "sha256": "16bc902dfcbe7884ee57523c77c2530e8de02585db98788ff20275e5911fb5c2"
+    },
+    {
+      "file": "inception/app-docker.toml",
+      "sha256": "867ad5719bf2d4b7311167f8a1e9adaa11935cb9252685038e4248de28e052a2"
+    },
+    {
+      "file": "runner/docker/run.sh",
+      "sha256": "7e2a867a42a06774533849a5c0a70eedbfd0c2ac3e575c5ac3f674e10aaadf3b"
+    },
+    {
+      "file": "runner/docker/image/Dockerfile",
+      "sha256": "73a4d0eb14c2a03f0d090046e404f0d990faf223036534086f2927641a48a6c5"
+    },
+    {
+      "file": "runner/docker/image/run.js",
+      "sha256": "10f57d87a6ac9099c3a27f00791e70717f923574f5412140d2efa06f2fdd7757"
+    },
+    {
+      "file": "runner/docker/image/package-lock.json",
+      "sha256": "3dedbb21380fe08e259aec717e7756008742ebc2ae548a468ada511b207996ae"
     }
   ],
   "measurements": [
@@ -170,6 +194,28 @@
       "sample_count": 3,
       "warmup_count": 1,
       "samples_file": "inception-firecracker.csv"
+    },
+    {
+      "workload": "inception",
+      "backend": "docker",
+      "median_ms": 5737.433,
+      "min_ms": 5643.307,
+      "max_ms": 7187.32,
+      "sample_count": 3,
+      "warmup_count": 1,
+      "samples_file": "inception-docker.csv"
     }
-  ]
+  ],
+  "binary_scope": "VM measurements only. Docker used an existing host server; its binary version and hash were not captured.",
+  "docker": {
+    "image_tag": "demo-playwright:local",
+    "image_digest": null,
+    "server_binary_version": null,
+    "server_binary_sha256": null,
+    "api_url": "http://127.0.0.1:5005",
+    "browser_component_digest": "sha256:656c7f16d9906eb59edb98ca07da41b1c856bc637df4913c0a1c0a459b9c3371",
+    "container_cpu_limit": null,
+    "container_memory_limit": null,
+    "note": "Already-running just serve inception docker server outside the measurement shell. A new container is launched per activity. Docker daemon/image metadata was inaccessible from the shell."
+  }
 }

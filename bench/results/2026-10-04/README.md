@@ -1,4 +1,4 @@
-# Obelisk 0.42.0 activity VM measurements
+# Obelisk 0.42.0 activity VM and Docker measurements
 
 Measured on 2026-10-04, on one Intel Core i9-14900HX host running Linux 6.18.43.
 All VM cases used the published Obelisk 0.42.0 x86_64 Linux musl binary, not a local build.
@@ -12,11 +12,11 @@ its persisted timestamps, and calculated latency.
 
 Values are median seconds; parentheses give measured sample counts.
 
-| Workload | Firecracker | QEMU KVM | QEMU TCG | Bochs WASM |
-| --- | ---: | ---: | ---: | ---: |
-| Bash printf | 0.155 s (7) | 0.144 s (7) | 0.431 s (7) | 0.966 s (7) |
-| Curl local page | 0.180 s (7) | 0.187 s (7) | 0.694 s (7) | 2.342 s (7) |
-| Chromium / trynix.dev | 13.713 s (3) | 13.124 s (3) | not measured | not measured |
+| Workload | Firecracker | QEMU KVM | QEMU TCG | Bochs WASM | Docker |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Bash printf | 0.155 s (7) | 0.144 s (7) | 0.431 s (7) | 0.966 s (7) | not measured |
+| Curl local page | 0.180 s (7) | 0.187 s (7) | 0.694 s (7) | 2.342 s (7) | not measured |
+| Chromium / trynix.dev | 13.713 s (3) | 13.124 s (3) | not measured | not measured | 5.737 s (3) |
 
 ## Method
 
@@ -37,8 +37,12 @@ Bash prints hello with printf. Curl fetches the local task-list page through Obe
 bridge. Both use 512 MiB and one guest vCPU. Chromium uses 8 GiB and four vCPUs: Playwright opens
 trynix.dev, boots its in-browser Linux VM with the stable Obelisk store path in summary.json,
 runs obelisk -v, and returns the output. This includes the in-browser boot and external HTTP work.
-Docker was not measured in this run because its daemon was unavailable; no earlier Docker sample
-is mixed into this table. Browser workloads were not measured on Bochs or QEMU TCG.
+Docker was measured separately through the already-running `just serve inception docker` server
+on the same host, with one discarded warmup and three sequential measured executions. Its
+`demo-playwright:local` image launches a fresh container for each activity, without explicit
+CPU or memory limits. The server binary and Docker image digests were not captured because the
+server and daemon ran outside the measurement shell. Docker uses the same stable Obelisk store
+path inside trynix.dev as the VM cases. Browser workloads were not measured on Bochs or QEMU TCG.
 
 ## Repeat
 
@@ -85,3 +89,17 @@ bash scripts/bench.sh inception qemu-kvm 3 1 /nix/store/82b2qf8r29jykh3jlkq2dxk5
 ```
 
 Repeat that browser command with firecracker and its separate server/database.
+
+For Docker, build the image and start the inception server in a separate terminal:
+
+```sh
+just build
+just serve inception docker
+```
+
+With the same API token as that server, sample its standard API port:
+
+```sh
+export OBELISK_API_URL=http://127.0.0.1:5005
+bash scripts/bench.sh inception docker 3 1 /nix/store/82b2qf8r29jykh3jlkq2dxk5nghgj23v-obelisk-0.42.0 > inception-docker.csv
+```

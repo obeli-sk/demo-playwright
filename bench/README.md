@@ -1,62 +1,22 @@
 # Activity latency benchmarks
 
-Latest stable-release measurements: [Obelisk 0.42.0, measured 2026-10-04](results/2026-10-04/README.md).
-The historical results below used RC8.
-
-The results below record elapsed time from each activity's persisted `Locked` event to its
-`Finished` event. This includes VM or container setup, the command, and
-result persistence. It excludes deployment verification, runtime downloads, and server startup.
-`scripts/bench.sh` submits executions sequentially, checks that each activity succeeded, and
-prints CSV after warmup runs. For todoapp and inception it times the browser child activity, not
-its parent workflow.
-
-All samples ran on the same Intel Core i9-14900HX host on 2026-10-01. The VM samples used the
-published Obelisk `0.42.0-rc.8` binary, with a separate server process for each backend. Echo prints `"hello"` with Bash's
-`printf`. Curl fetches the local todoapp page at `http://obelisk-host:8090/` through Obelisk's
-guest HTTP bridge. Todoapp adds `Buy milk`. Inception boots the RC8 store path
-`/nix/store/dyiw7langq0wvrzanv1pys89a9lywxz3-obelisk-0.42.0-rc.8` on trynix.dev.
-Echo, curl, and todoapp use 512 MiB and one guest vCPU. Inception uses 8 GiB and four guest
-vCPUs, as configured in its deployment.
+Measured on 2026-10-04 on an Intel Core i9-14900HX host. Values are median seconds;
+parentheses give measured sample counts.
 
 | Workload | Firecracker | QEMU KVM | QEMU TCG | Bochs WASM | Docker |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Echo | 158 ms (7) | 221 ms (7) | 471 ms (7) | 886 ms (7) | |
-| Curl | 189 ms (7) | 347 ms (7) | 981 ms (7) | 2,353 ms (7) | |
-| Todoapp | 808 ms (5) | 1,632 ms (5) | 13.357 s (5) | | 505 ms (5) |
-| Inception | 11.122 s (3) | 16.879 s (3) | | | 5.744 s (5) |
+| Bash printf | 0.155 s (7) | 0.144 s (7) | 0.431 s (7) | 0.966 s (7) | not measured |
+| Curl local page | 0.180 s (7) | 0.187 s (7) | 0.694 s (7) | 2.342 s (7) | not measured |
+| Chromium / trynix.dev | 13.713 s (3) | 13.124 s (3) | not measured | not measured | 5.737 s (3) |
 
-Values are medians; parentheses give sample counts. Firecracker's echo image cache was warm.
-QEMU KVM's first two echo runs were about 450 ms, while
-its final five had a 217 ms median. The browser workloads were not measured on Bochs WASM or
-inception on QEMU TCG.
+Latency runs from each activity's persisted `Locked` event to its `Finished` event,
+including VM or container setup, the command, and result persistence. It excludes deployment
+verification, runtime downloads, and server startup. The browser case launches Chromium,
+opens trynix.dev, boots Obelisk 0.42.0 in its in-browser Linux VM, and runs `obelisk -v`.
 
-## Repeat
+VM measurements used the published Obelisk 0.42.0 binary. Docker was measured separately
+through an already-running inception server, without explicit container CPU or memory limits.
+Bash and curl have two discarded warmups; Chromium has one. All measured executions succeeded.
 
-Enter `nix develop` and set `OBELISK_API_TOKEN` as described in the
-[top-level README](../README.md#setup). Use separate terminals for the page server, Obelisk
-server, and benchmark commands. `just serve-page` is needed for curl and todoapp.
-
-```sh
-just serve-page
-just vm_backend=firecracker serve bench vm
-just bench echo firecracker 7 2 > echo.csv
-just bench curl firecracker 7 2 > curl.csv
-```
-
-Restart Obelisk with `just vm_backend=qemu-kvm serve bench vm`, or another VM backend, before
-running its samples. The `backend` argument to `just bench` labels the CSV; it does not change the
-server. The last two numeric arguments are measured runs and warmup runs.
-
-For the browser workloads, serve the matching app and pass the same backend label:
-
-```sh
-just vm_backend=firecracker serve todoapp vm
-just bench todoapp firecracker 5 1 > todoapp.csv
-
-just vm_backend=firecracker serve inception vm
-just bench inception firecracker 3 1 /nix/store/dyiw7langq0wvrzanv1pys89a9lywxz3-obelisk-0.42.0-rc.8 > inception.csv
-```
-
-For Docker, run `just build`, serve either app with `just serve todoapp docker` or
-`just serve inception docker`, and use the same `just bench` command with `docker` as its label.
-The todoapp page stays up between runs, so its task list grows as each run adds a task.
+The [measurement notes](results/2026-10-04/README.md) contain reproduction commands,
+resource sizes, source and runtime pins, and all raw CSV samples.
