@@ -1,5 +1,8 @@
 # Activity latency benchmarks
 
+Latest stable-release measurements: [Obelisk 0.42.0, measured 2026-10-04](results/2026-10-04/README.md).
+The historical results below used RC8.
+
 The results below record elapsed time from each activity's persisted `Locked` event to its
 `Finished` event. This includes VM or container setup, the command, and
 result persistence. It excludes deployment verification, runtime downloads, and server startup.
