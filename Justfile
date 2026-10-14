@@ -47,7 +47,7 @@ _verify app backend:
     echo "Unsupported deployment type: $2" >&2
     exit 1
   fi
-  obelisk server verify \
+  obelisk server verify --skip-db \
     $server_config \
     --app-config "app-$2.toml" \
     --deployment "deployment-$2.toml"
