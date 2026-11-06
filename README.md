@@ -53,10 +53,15 @@ The browser runs in one of two places, chosen when you start the server:
    ```sh
    nix develop
    export OBELISK_API_TOKEN=$(obelisk generate token)
+   export OBELISK_API_URL=http://127.0.0.1:5005
+   export OBELISK_WEBUI_URL=http://127.0.0.1:8080
    ```
 
    With [direnv](https://direnv.net), copy `.envrc-example` to `.envrc` and run `direnv allow`
    instead. Every shell that runs `just` needs the same token.
+   Set the URL variables to your configured listeners; the API and screenshot
+   helpers require them rather than guessing addresses. These are external
+   shell settings. Obelisk's internal URL sources are injected only into components.
 3. For the Docker backend, build the browser image with `just build`.
 
 ## Run
