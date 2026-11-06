@@ -6,7 +6,8 @@ backend=${2:?backend label required}
 runs=${3:-7}
 warmups=${4:-2}
 value=${5:-}
-api=${OBELISK_API_URL:-http://127.0.0.1:5005}
+api=${OBELISK_API_URL:?Set OBELISK_API_URL to the configured API address}
+api=${api%/}
 
 [[ $runs =~ ^[1-9][0-9]*$ && $warmups =~ ^[0-9]+$ ]] || {
   printf 'runs must be positive and warmups nonnegative\n' >&2

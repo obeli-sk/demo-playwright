@@ -3,7 +3,7 @@
 // --focus scrolls the trace so the first row containing <text> is at the top.
 const { chromium } = require("playwright-core");
 
-const WEBUI = process.env.OBELISK_WEBUI_URL ?? "http://127.0.0.1:8080";
+const WEBUI = process.env.OBELISK_WEBUI_URL?.replace(/\/$/, "");
 const HTTP_ROW = /^(GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS) /;
 
 async function main() {
@@ -11,6 +11,7 @@ async function main() {
   if (!executionId || !output || (flag !== undefined && (flag !== "--focus" || !focus))) {
     throw new Error("usage: webui-screenshot.js <execution-id> <output.png> [--focus <text>]");
   }
+  if (!WEBUI) throw new Error("Set OBELISK_WEBUI_URL to the configured Web UI address");
 
   const browser = await chromium.launch();
   try {

@@ -6,7 +6,8 @@ set -euo pipefail
 ffqn=${1:?workflow FFQN required}
 shift
 steps_ffqn=${ffqn/-multistep.run/-steps.run-cancellable}
-api=${OBELISK_API_URL:-http://127.0.0.1:5005}
+api=${OBELISK_API_URL:?Set OBELISK_API_URL to the configured API address}
+api=${api%/}
 
 get() {
   curl -fsS -H "Authorization: Bearer $OBELISK_API_TOKEN" -H accept:application/json "$api/v1/$1"
