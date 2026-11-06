@@ -24,7 +24,7 @@ serve app backend:
     echo "Unsupported deployment type: $2" >&2
     exit 1
   fi
-  exec obelisk server run \
+  exec obelisk server run --dev \
     $server_config \
     --app-config "app-$2.toml" \
     --deployment "deployment-$2.toml"
