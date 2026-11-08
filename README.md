@@ -12,10 +12,6 @@ Two [Obelisk](https://obeli.sk) apps drive a Chromium browser with
 
   <img src="inception/screenshots/vnc-demo.gif" width="322" alt="VNC browser loading trynix, selecting the Obelisk store path, booting the VM and printing obelisk -v">
 
-  Run in an activity VM, the web UI's trace shows every HTTP request the browser made:
-
-  <img src="inception/screenshots/webui-trace.png" width="400" alt="Obelisk web UI trace of an inception run: the workflow, its browser.run activity and the HTTP requests Chromium made from the activity VM">
-
 ## How it works
 
 In Obelisk, a [workflow](https://obeli.sk/docs/latest/concepts/workflows/) is deterministic code
@@ -26,9 +22,8 @@ by a crash or restart continues where it left off instead of starting over.
 Obelisk retries an activity that fails or times out, so activities must be idempotent: running one
 twice must have the same effect as running it once. An activity also keeps no state between runs;
 all it gets is its parameters. Anything stateful, such as a browser with an open page, lives in an
-external resource like a Docker container or a VM. Obelisk can manage such resources: an activity
-VM is created and removed for each activity run, and a longer-lived one, like the Docker container
-of the multi-step workflows, is provisioned and cleaned up by a workflow (see
+external resource like a Docker container. The container of the multi-step workflows is
+provisioned and cleaned up by a workflow (see
 [Cleaning up the browser](#cleaning-up-the-browser)).
 
 Each app comes with two workflows:
@@ -39,15 +34,12 @@ Each app comes with two workflows:
   in a Docker container while the workflow calls several activities on it, one per step. You can
   watch the browser through VNC and step through the workflow yourself.
 
-The browser runs in one of two places, chosen when you start the server:
-
-- **Docker** (`docker`): Chromium runs in a container built from this repo. Both workflows work.
-- **Activity VM** (`vm`): Obelisk starts a fresh virtual machine for each activity and removes it
-  afterwards, so only the single-step workflow works.
+The browser runs in a Docker container built from this repository. Both workflows work.
+Obelisk 0.43.0-rc.17 removed activity VMs; use the Docker deployments for browser automation.
 
 ## Setup
 
-1. Install [Nix](https://nixos.org/download/). For the Docker backend, also start a Docker daemon.
+1. Install [Nix](https://nixos.org/download/). Also start a Docker daemon for browser automation.
 2. Enter the development shell and create an API token for the Obelisk CLI:
 
    ```sh
@@ -62,28 +54,20 @@ The browser runs in one of two places, chosen when you start the server:
    Set the URL variables to your configured listeners; the API and screenshot
    helpers require them rather than guessing addresses. These are external
    shell settings. Obelisk's internal URL sources are injected only into components.
-3. For the Docker backend, build the browser image with `just build`.
+3. Build the browser image with `just build`.
 
 ## Run
 
-Start the server for one app and backend, then run the workflows from another shell as described
+Start the server for one app, then run the workflows from another shell as described
 in [todoapp/README.md](todoapp/README.md) and [inception/README.md](inception/README.md):
 
 ```sh
-just serve todoapp docker     # or: just serve todoapp vm
-just serve inception docker   # or: just serve inception vm
+just serve todoapp docker
+just serve inception docker
 ```
 
 Run one server at a time, since both use the same port. The server also serves a web UI at
-<http://127.0.0.1:8080>, which shows each execution with its activities and, for activity VMs, the
-HTTP requests they made.
-
-| Command | Docker | VM |
-| --- | --- | --- |
-| `just todoapp 'Buy milk'` | yes | yes |
-| `just todoapp-multistep 'Buy milk'` | yes | no |
-| `just inception` | yes | yes |
-| `just inception-multistep` | yes | no |
+<http://127.0.0.1:8080>, which shows each execution and its activities.
 
 ### Stepping through a workflow
 
@@ -119,57 +103,44 @@ is not cancellable, so its cleanup always runs. Because Obelisk records each ste
 runs after a server crash or restart. The execution ID that `just advance` takes is the inner
 workflow's; the outer one is printed as `Supervisor`.
 
-### Activity VMs
-
-The VM backend needs a CPU emulator or virtualizer, set with `vm_backend`. The default, `qemu-tcg`,
-emulates the CPU in software and works anywhere. On Linux with `/dev/kvm`, `qemu-kvm` is much
-faster:
-
-```sh
-just vm_backend=qemu-kvm serve inception vm
-# or once per shell:
-export OBELISK_UNSTABLE_ACTIVITY_VM=qemu-kvm
-```
-
-The first start downloads the VM runtime and the browser, which takes a while.
-
 ## Layout
 
-- `todoapp/` and `inception/` each hold one app: its workflows, an app policy (`app-*.toml`) and
-  deployment (`deployment-*.toml`) per backend, and `server-docker.toml` for the Docker backend.
-- [runner/](runner/) runs the browser for both apps: [runner/docker/](runner/docker/) holds the
-  Docker image and the scripts Obelisk calls as activities, and [runner/vm/](runner/vm/) holds the
-  script that runs inside an activity VM.
+- `todoapp/` and `inception/` each hold one app: its workflows, `app-docker.toml`,
+  `deployment-docker.toml` and `server-docker.toml`.
+- [runner/docker/](runner/docker/) holds the browser image and the scripts Obelisk calls as activities.
 - [scripts/](scripts/) holds the helpers behind the `just` commands.
-- [bench/](bench/) holds the light VM activities and benchmark results.
+- [bench/](bench/) holds host exec activities and historical benchmark results.
 
 ## Benchmarks
 
-[bench/](bench/) provides a Bash `printf` activity and a curl activity that fetches the local
-todoapp page through the VM's HTTP bridge. `just bench` also measures the existing single-step
-todoapp and inception activities. It prints CSV with each activity's persisted `Locked` to
-`Finished` duration, after two warmup runs by default:
+[bench/](bench/) provides host exec activities for Bash `printf` and curl of the local todoapp
+page. `just bench` also measures the existing single-step todoapp and inception activities. It
+prints CSV with each activity's persisted `Locked` to `Finished` duration, after two warmup runs
+by default:
 
 ```sh
-just serve-page                         # separate terminal, needed for curl and todoapp
-just vm_backend=firecracker serve bench vm
-just bench echo firecracker > echo.csv  # separate terminal
-just bench curl firecracker > curl.csv
+just serve-page                  # separate terminal, needed for curl and todoapp
+just serve bench exec
+just bench echo exec > echo.csv  # separate terminal
+just bench curl exec > curl.csv
 ```
 
-To measure the browser workloads, serve `todoapp` or `inception` with the chosen backend and run
-`just bench todoapp firecracker` or `just bench inception firecracker`. For Docker, use
-`just serve todoapp docker` or `just serve inception docker`, then label the corresponding command
-`docker`. The backend argument labels the output; the running server selects the actual backend.
-See [bench/README.md](bench/README.md) for the RC8 results, setup details, and the Docker timings.
+For browser workloads, run `just serve todoapp docker` or `just serve inception docker`, then
+`just bench todoapp docker` or `just bench inception docker`. The backend argument labels the
+output; the running server selects the actual backend. Exec timings exclude VM boot and sandbox
+setup, so they measure a different execution path from the historical VM results retained in
+[bench/README.md](bench/README.md).
 
 ## Development
 
-`just verify-docker` and `just verify-vm` check the deployments. `just test-e2e docker` and
-`just test-e2e vm` run the todoapp workflows end to end.
+`just verify-docker` checks both browser deployments; `just verify-exec` checks the benchmark
+deployment. `just test-e2e docker` runs the todoapp workflows end to end, and `just test-bench`
+checks both exec workloads and their CSV measurements without Docker.
 
 Obelisk only runs activity scripts whose digest is approved. After changing a script in
 `runner/docker/`, run `just verify-docker` and copy the digests it prints into both apps'
-`app-docker.toml` and `server-docker.toml`.
+`app-docker.toml` and `server-docker.toml`. Benchmark scripts require matching approvals in
+`bench/app-exec.toml` and `bench/server-exec.toml`. These host exec grants authorize exactly the
+reviewed scripts; they do not provide the removed VM backend's HTTP interception.
 
 The browser runner is adapted from the MIT-licensed `obeli-sk/components` Playwright component.

@@ -7,7 +7,7 @@ Start the page and the server:
 
 ```sh
 just serve-page &
-just serve todoapp docker   # or: just serve todoapp vm
+just serve todoapp docker
 ```
 
 ## Single step
@@ -21,7 +21,7 @@ just todoapp 'Buy milk'
 # Activity E_...: locked at ..., finished at ..., took 1.52s
 ```
 
-## Multi step (Docker only)
+## Multi step
 
 [workflow/multistep.js](workflow/multistep.js) opens the page in a browser you can watch and
 removes the browser at the end. In between, [workflow/steps.js](workflow/steps.js) adds the task

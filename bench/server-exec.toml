@@ -1,0 +1,3 @@
+[allowed_exec_activities]
+"echo.run" = "sha256:e70e0afac48c2f9f0409664ea78ee48771593c30a1c24a07545d286ceca7e01e"
+"curl.run" = "sha256:96298341eede33bc8cc2f99437d4667ff0af6f2bf0ba357bd1121599d37468cf"

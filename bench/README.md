@@ -1,5 +1,11 @@
 # Activity latency benchmarks
 
+Current Obelisk 0.43.0-rc.17 runs the echo and curl workloads as host exec activities:
+`just serve bench exec`, then `just bench echo exec` or `just bench curl exec`. Start
+`just serve-page` before curl. These preserve the original FFQNs and return values, but do not
+include VM startup or intercepted HTTP. The VM backend was removed in RC17; the measurements
+and reproduction notes below describe the historical release and remain unchanged.
+
 Measured on 2026-10-04 on an Intel Core i9-14900HX host. Values are median seconds;
 parentheses give measured sample counts.
 

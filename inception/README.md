@@ -8,7 +8,7 @@ tab. The workflows open it, pick an Obelisk build from the
 for setup.
 
 ```sh
-just serve inception docker   # or: just serve inception vm
+just serve inception docker
 ```
 
 By default the workflows boot the latest Obelisk release candidate. To boot another build from the
@@ -24,17 +24,11 @@ just inception
 # Activity E_...: locked at ..., finished at ..., took 15.432s
 ```
 
-The in-browser VM is heavy: on the VM backend each run gets 8 GiB of memory and 4 CPUs, and
-without KVM it takes several minutes.
+The in-browser VM is heavy; leave enough memory available to the Docker container. Obelisk
+0.43.0-rc.17 removed activity VMs, so browser runs now use the Docker deployment. The historical
+VM HTTP trace screenshot remains in `screenshots/`.
 
-On the VM backend, Obelisk records every HTTP request the activity makes. Open the execution in the
-web UI at <http://127.0.0.1:8080> and expand the activity to see what Chromium fetched and how
-long each request took. The Google Tag Manager request fails because the VM may only reach
-trynix.dev and the two binary caches:
-
-<img src="screenshots/webui-trace.png" width="800" alt="Obelisk web UI trace of an inception run: the workflow, its browser.run activity and the HTTP requests Chromium made from the activity VM">
-
-## Multi step (Docker only)
+## Multi step
 
 [workflow/multistep.js](workflow/multistep.js) opens trynix in a browser you can watch and
 removes the browser at the end. In between, [workflow/steps.js](workflow/steps.js) selects the

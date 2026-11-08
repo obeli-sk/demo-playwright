@@ -7,7 +7,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     obelisk = {
-      url = "github:obeli-sk/obelisk/latest-rc";
+      url = "github:obeli-sk/obelisk/v0.43.0-rc.17";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         flake-utils.follows = "flake-utils";
@@ -36,10 +36,6 @@
             python3Packages.vncdotool # scripts/screenshots.sh
             playwright-test # scripts/webui-screenshot.js
             docker
-            # activity-vm
-            qemu # activity VM backend
-            erofs-utils # Firecracker activity VM store images
-            firecracker # Firecracker activity VM runtime
           ];
           # scripts/webui-screenshot.js
           shellHook = ''
