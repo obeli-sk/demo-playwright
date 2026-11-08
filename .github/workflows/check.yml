@@ -15,19 +15,7 @@ jobs:
           nix_conf: |
             extra-substituters = https://obeli-sk.cachix.org
             extra-trusted-public-keys = obeli-sk.cachix.org-1:31iM9GWSEhAXvvuTWQ7CvAcwvgRzsuJ9yJghywSd3Jw=
-      - run: nix develop --command just verify-docker
+      - run: nix develop --command just verify
       - run: nix develop --command ./scripts/dev-deps.sh && git diff --exit-code -- dev-deps.txt
       - run: nix develop --command just build
-      - run: nix develop --command just test-e2e docker
-
-  bench:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: nixbuild/nix-quick-install-action@v34
-        with:
-          nix_conf: |
-            extra-substituters = https://obeli-sk.cachix.org
-            extra-trusted-public-keys = obeli-sk.cachix.org-1:31iM9GWSEhAXvvuTWQ7CvAcwvgRzsuJ9yJghywSd3Jw=
-      - run: nix develop --command just verify-exec
-      - run: nix develop --command just test-bench
+      - run: nix develop --command just test-e2e

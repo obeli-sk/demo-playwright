@@ -2,14 +2,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/../todoapp"
 
-backend=${1:-docker}
-case "$backend" in
-  docker) ;;
-  *) printf 'Unknown backend %s, expected docker\n' "$backend" >&2; exit 1 ;;
-esac
-server_config=(--server-config server-docker.toml)
-
 export OBELISK_API_TOKEN=$(obelisk generate token)
+export OBELISK_API_URL=http://127.0.0.1:5005
 execution_id=$(obelisk generate execution-id)
 container="demo-playwright-todoapp-$execution_id"
 server_log=$(mktemp)
@@ -32,8 +26,8 @@ trap cleanup EXIT
 node page/server.mjs >>"$server_log" 2>&1 &
 page_pid=$!
 
-HEADED=false obelisk server run "${server_config[@]}" --app-config "app-$backend.toml" \
-  --deployment "deployment-$backend.toml" >>"$server_log" 2>&1 &
+HEADED=false obelisk server run --server-config server.toml --app-config app.toml \
+  --deployment deployment.toml >>"$server_log" 2>&1 &
 server_pid=$!
 ready=false
 for _ in $(seq 1 600); do
@@ -54,7 +48,7 @@ fi
 expected='{title:"Playwright task list",tasks:["Buy milk"]}'
 result=$(obelisk execution submit --follow --json demo:playwright/todoapp.run -- '"Buy milk"')
 jq -s -e ".[-1].ok == $expected" <<<"$result" >/dev/null
-printf 'Single-step todoapp workflow passed on %s\n' "$backend"
+printf 'Single-step todoapp workflow passed\n'
 
 result=$(obelisk execution submit --follow --json --execution-id "$execution_id" \
   demo:playwright/todoapp-multistep.run -- '"Buy milk"' 0)

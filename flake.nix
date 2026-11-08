@@ -20,7 +20,6 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        screenshotFonts = pkgs.makeFontsConf { fontDirectories = [ pkgs.dejavu_fonts ]; };
       in {
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
@@ -32,17 +31,8 @@
             obelisk.packages.${system}.default
             gh # scripts/sync-branch-protection.sh
             yq-go # scripts/sync-branch-protection.sh
-            imagemagick # scripts/screenshots.sh
-            python3Packages.vncdotool # scripts/screenshots.sh
-            playwright-test # scripts/webui-screenshot.js
             docker
           ];
-          # scripts/webui-screenshot.js
-          shellHook = ''
-            export NODE_PATH=${pkgs.playwright-test}/lib/node_modules''${NODE_PATH:+:$NODE_PATH}
-            export PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers}
-            export FONTCONFIG_FILE=${screenshotFonts}
-          '';
         };
       });
 }
