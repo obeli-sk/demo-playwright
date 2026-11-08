@@ -1,78 +1,26 @@
 set positional-arguments := true
 
-image := "demo-playwright:local"
-vm_backend := env("OBELISK_UNSTABLE_ACTIVITY_VM", "qemu-tcg")
-
 build:
-  docker build -t {{image}} runner/docker/image
+  docker build -t demo-playwright:local runner/docker/image
 
 serve-page:
   node todoapp/page/server.mjs
 
-# Runs bench in an activity VM, or todoapp/inception in Docker or an activity VM.
-serve app backend:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  cd "$1"
+serve:
+  cd todoapp && obelisk server run --dev --server-config server.toml --app-config app.toml --deployment deployment.toml
 
-  server_config=""
-  if [ "$2" = vm ]; then
-    export OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}}
-  elif [ "$2" = docker ]; then
-    server_config="--server-config server-docker.toml"
-  else
-    echo "Unsupported deployment type: $2" >&2
-    exit 1
-  fi
-  exec obelisk server run --dev \
-    $server_config \
-    --app-config "app-$2.toml" \
-    --deployment "deployment-$2.toml"
-
-verify-docker: (_verify "todoapp" "docker") (_verify "inception" "docker")
-
-verify-vm: (_verify "bench" "vm") (_verify "todoapp" "vm") (_verify "inception" "vm")
-
-_verify app backend:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  cd "$1"
-
-  server_config=""
-  if [ "$2" = vm ]; then
-    export OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}}
-  elif [ "$2" = docker ]; then
-    server_config="--server-config server-docker.toml"
-  else
-    echo "Unsupported deployment type: $2" >&2
-    exit 1
-  fi
-  obelisk server verify --skip-db \
-    $server_config \
-    --app-config "app-$2.toml" \
-    --deployment "deployment-$2.toml"
+verify:
+  cd todoapp && obelisk server verify --skip-db --server-config server.toml --app-config app.toml --deployment deployment.toml
 
 todoapp task:
-  ./scripts/submit-single-step.sh demo:playwright/todoapp.run "$(jq -cn --arg value "$1" '$value')"
+  obelisk execution submit --follow demo:playwright/todoapp.run -- "$(jq -cn --arg value "$1" '$value')"
 
-# Docker only: submits paused, advances through browser startup and prints the VNC address.
+# Starts the browser and leaves its steps paused for `just advance`.
 todoapp-multistep task pause_seconds="0":
-  ./scripts/start-multistep.sh demo:playwright/todoapp-multistep.run "$(jq -cn --arg value "$1" '$value')" "$2"
-
-# Boots `store_path` (default: the latest obelisk RC) on trynix.dev and prints `obelisk -v`.
-inception store_path=`nix eval --raw github:obeli-sk/obelisk/latest-rc`:
-  ./scripts/submit-single-step.sh demo:playwright/inception.run "$(jq -cn --arg value "$1" '$value')"
-
-# Docker only: like `todoapp-multistep`.
-inception-multistep store_path=`nix eval --raw github:obeli-sk/obelisk/latest-rc`:
-  ./scripts/start-multistep.sh demo:playwright/inception-multistep.run "$(jq -cn --arg value "$1" '$value')"
+  ./scripts/start-multistep.sh "$(jq -cn --arg value "$1" '$value')" "$2"
 
 advance execution_id:
   obelisk execution advance "$1"
-
-# Prints warm Locked-to-Finished samples as CSV; start the matching server first.
-bench workload backend runs="7" warmups="2" value="":
-  @./scripts/bench.sh "$1" "$2" "$3" "$4" "$5"
 
 unpause execution_id:
   obelisk execution unpause "$1"
@@ -80,13 +28,5 @@ unpause execution_id:
 cancel execution_id:
   obelisk execution cancel "$1"
 
-test-e2e backend:
-  OBELISK_UNSTABLE_ACTIVITY_VM={{vm_backend}} ./scripts/test-e2e.sh "$1"
-
-# Screenshots the web UI trace of an inception run, including the HTTP requests an activity VM made.
-webui-screenshot execution_id:
-  node scripts/webui-screenshot.js "$1" inception/screenshots/webui-trace.png
-
-# Retakes <app>/screenshots/vnc-demo.gif through VNC; needs `just serve <app> docker`, and `just serve-page` for todoapp.
-screenshots app:
-  ./scripts/screenshots.sh "$1"
+test-e2e:
+  ./scripts/test-e2e.sh

@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# Usage: start-multistep.sh <workflow-ffqn> [json-param...]
+# Usage: start-multistep.sh <json-task> <pause-seconds>
 # Starts the browser, then leaves the steps workflow paused for `just advance` and lets the supervisor run.
 set -euo pipefail
 
-ffqn=${1:?workflow FFQN required}
-shift
-steps_ffqn=${ffqn/-multistep.run/-steps.run-cancellable}
+ffqn=demo:playwright/todoapp-multistep.run
+steps_ffqn=demo:playwright/todoapp-steps.run-cancellable
 api=${OBELISK_API_URL:?Set OBELISK_API_URL to the configured API address}
 api=${api%/}
 
@@ -13,11 +12,9 @@ get() {
   curl -fsS -H "Authorization: Bearer $OBELISK_API_TOKEN" -H accept:application/json "$api/v1/$1"
 }
 
-app=${ffqn#*/}
-app=${app%-multistep.run}
 execution_id=$(obelisk generate execution-id)
 # Must match the names multistep.js derives from its execution ID.
-container="demo-playwright-$app-$execution_id"
+container="demo-playwright-todoapp-$execution_id"
 socket="/tmp/demo-playwright/$execution_id.sock"
 
 obelisk execution submit --paused --execution-id "$execution_id" "$ffqn" -- "$@" >/dev/null

@@ -11,7 +11,7 @@ max_retries = 2
 max_output_bytes = 65536
 env_vars = ["PATH"]
 
-# Multi-step browser session for `just *-multistep`: VNC and `just advance` work between steps.
+# Multi-step browser session for VNC and `just advance` between steps.
 [[activity_exec]]
 ffqn = "demo:playwright/browser-session.start"
 location = "runner/docker/start.sh"
