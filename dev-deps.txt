@@ -3,5 +3,5 @@ docker 29.9.2
 jq 1.8.2
 just 1.59.0
 node 24.22.2
-obelisk 0.43.0-rc.18 (654b621)
+obelisk 0.43.0-rc.19 (443db84)
 socat version 1.8.1.3
