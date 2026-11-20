@@ -8,7 +8,7 @@ params = [
 return_type = "result<string, string>"
 exec.lock_expiry.seconds = 120
 max_retries = 2
-max_output_bytes = 65536
+max_output_size.kib = 64
 env_vars = ["PATH"]
 
 # Multi-step browser session for VNC and `just advance` between steps.
@@ -38,7 +38,7 @@ params = [
 return_type = "result<string, string>"
 exec.lock_expiry.seconds = 45
 max_retries = 2
-max_output_bytes = 65536
+max_output_size.kib = 64
 env_vars = ["PATH"]
 
 [[activity_exec]]
